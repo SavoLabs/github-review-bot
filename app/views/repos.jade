@@ -1,0 +1,19 @@
+extends ./layout.jade
+block title
+	title Repositories
+block content
+	unless repos == null
+		section(class="section--center mdl-grid mdl-shadow--2dp")
+			each val in repos
+				div(class="mdl-card mdl-cell mdl-cell--9-col-desktop mdl-cell--6-col-tablet mdl-cell--4-col-phone")
+					div(class="mdl-card__supporting-text")
+						h4(class="")=val.name
+					form
+						div(class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label")
+							label(for="reviews_#{val.id}", class="mdl-textfield__label")="Required Reviews"
+							input(type="number", name="reviews", value="3", id="reviews_#{val.id}", class="mdl-textfield__input")
+							span(class="mdl-textfield__error")="Value must be number"
+					div(class="mdl-card__actions")
+						a(class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect",href="/enforce/#{val.name}")="Initialize Hook"
+	else
+		h3 We got nothing!

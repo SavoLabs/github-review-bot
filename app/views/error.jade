@@ -1,0 +1,7 @@
+extends ./layout.jade
+block title
+  title Error
+block content
+  h1= message
+  h2= error.status
+  pre #{error.stack}
