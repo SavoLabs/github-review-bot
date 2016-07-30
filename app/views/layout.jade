@@ -1,8 +1,10 @@
 doctype html
 html
   head
-    block title
-      title review-bot
+    title
+      | :: Peer Review Bot ::
+      block title
+        | Home
     link(rel='stylesheet', href='https://fonts.googleapis.com/icon?family=Material+Icons')
 
     link(rel='stylesheet', href='https://code.getmdl.io/1.1.3/material.deep_purple-indigo.min.css')
@@ -12,7 +14,8 @@ html
         header(class="mdl-layout__header mdl-layout__header--waterfall")
           // top row - always visible
           div(class="mdl-layout__header-row")
-            span(class="mdl-layout-title") Peer Review Bot
+            span(class="mdl-layout-title")
+              block title
             div(class="mdl-layout-spacer")
             div(class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right")
               label(for="waterfall-exp", class="mdl-button mdl-js-button mdl-button--icon")

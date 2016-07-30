@@ -126,7 +126,7 @@ function processPullRequest(labelResult, pr) {
             // If we're supposed to merge, merge
             if (approved && config.mergeOnReview) {
                 output.push('Merging on review set to true, PR approved, merging');
-                //bot.merge(pr.number);
+                bot.merge(pr.number);
             }
         });
     });
@@ -153,18 +153,18 @@ function processPullRequest(labelResult, pr) {
 /**
  * GET /pullrequest/:id: Process Single Pull Request
  */
-router.get('/:repo/:id', function (req, res) {
-    debug('Received request to process PR #' + req.params.id);
-
-    bot.getPullRequest(req.params.id, req.params.repo, function (pullRequests) {
-        if (pullRequests && pullRequests.length > 0) {
-            bot.checkForLabel(req.params.id, req.params.repo, pullRequests[0], processPullRequest);
-        } else {
-            return debug('PR ' + req.params.id + ' not found');
-        }
-    });
-
-    return _respond(res, 'Processing PR #' + req.params.id);
-});
+// router.get(':reviewsNeeded/:repo/:id', function (req, res) {
+//     debug('Received request to process PR #' + req.params.id);
+//
+//     bot.getPullRequest(req.params.id, req.params.repo, function (pullRequests) {
+//         if (pullRequests && pullRequests.length > 0) {
+//             bot.checkForLabel(req.params.id, req.params.repo, pullRequests[0], processPullRequest);
+//         } else {
+//             return debug('PR ' + req.params.id + ' not found');
+//         }
+//     });
+//
+//     return _respond(res, 'Processing PR #' + req.params.id);
+// });
 
 module.exports = router;
