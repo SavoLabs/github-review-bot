@@ -6,21 +6,26 @@ var express = require('express'),
 /* GET home page. */
 router.get('/', function (req, res) {
 		bot.getAllRepositories(function(result) {
-			console.log("type: " + typeof(result));
 	    res.render('repos', { repos: result });
 		});
 });
 
-router.get('/repos/:repo', function (req, res) {
-		bot.getAllRepositories(function(result) {
-			console.log("type: " + typeof(result));
-	    res.render('repos', { repos: result });
-		});
+router.get('/:repo', function (req, res) {
+	var output = [];
+	bot.getRepository(req.params.repo, function(result) {
+		if(result) {
+			output[output.length] = result;
+		} else {
+			output = null;
+		}
+		res.render('repos', { repos: output });
+	});
 });
 
-router.get('/enforce/:repo', function(req, res) {
+router.post('/enforce/:repo', function(req, res) {
 		console.log("attempting to enforce: " + req.params.repo);
-		bot.enforce(req.params.repo,function(err,result) {
+		var reviewsNeeded = parseInt(req.body.reviewsNeeded || config.reviewsNeeded, 0);
+		bot.enforce(req.params.repo, reviewsNeeded ,function(err,result) {
 			console.log("err: " + err);
 			console.log("result: " + result);
 			if(!err){

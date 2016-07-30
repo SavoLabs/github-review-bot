@@ -18,6 +18,7 @@ config.filenameFilter = '';
 config.shameComment = ":bell: Shame! :bell: Shame!\nYou cannot vote to approve your own PR. 'A' for effort though.";
 config.lgtmRegex = /(^LGTM$)|(^Looks good to me!?$)|(^\:\+1\:$)/gmi;
 config.needsWorkRegex = /(^\:-1\:$)|(needs work)/gmi;
+config.pullRequestEvents = ['pull_request', 'issue_comment', 'pull_request_review_comment'];
 
 config.botUrlRoot = process.env.GRB_BOT_URL || 'http://live.bit13.com:3000';
 
@@ -30,11 +31,6 @@ if (config.instructionsComment === '') {
 
     config.instructionsComment = comment;
 }
-
-if (config.instructionsComment.indexOf('{reviewsNeeded}')) {
-    config.instructionsComment = config.instructionsComment.replace('{reviewsNeeded}', config.reviewsNeeded);
-}
-
 
 
 module.exports = config;

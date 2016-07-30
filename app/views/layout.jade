@@ -7,6 +7,19 @@ html
 
     link(rel='stylesheet', href='https://code.getmdl.io/1.1.3/material.deep_purple-indigo.min.css')
     link(rel='stylesheet', href='/public/css/style.css')
-  body(class="mdl-demo mdl-color--grey-100 mdl-color-text--grey-700 mdl-base")
-    block content
+  body(class="mdl-color--grey-100 mdl-color-text--grey-700 mdl-base")
+      div(class="layout-waterfall mdl-layout mdl-js-layout")
+        header(class="mdl-layout__header mdl-layout__header--waterfall")
+          // top row - always visible
+          div(class="mdl-layout__header-row")
+            span(class="mdl-layout-title") Peer Review Bot
+            div(class="mdl-layout-spacer")
+            div(class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right")
+              label(for="waterfall-exp", class="mdl-button mdl-js-button mdl-button--icon")
+                i(class="material-icons")="search"
+              div(class="mdl-textfield__expandable-holder")
+                input(type="text", name="search", class="mdl-textfield__input", id="waterfall-exp")
+        main(class="mdl-layout__content")
+          div(class="page-content")
+            block content
     script(src='/public/material-design-lite/material.min.js')

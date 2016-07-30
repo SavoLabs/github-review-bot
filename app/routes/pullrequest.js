@@ -5,50 +5,58 @@ var express = require('express'),
     router = express.Router();
 
 
-    /**
-     * POST /pullrequest: Process incoming GitHub payload
-     */
-    router.post('/', function (req, res) {
-      var eventName = req.get("X-GitHub-Event");
-      // ensure we only handle events we know how to handle
-      if(eventName !== 'pull_request' && eventName !== 'pull_request_review_comment' && eventName !== 'issue_comment' ) {
-        console.log('POST Request received, but this is not the event I am looking for.');
-        return debug('POST Request received, but this is not the event I am looking for.');
-      }
+  /**
+   * POST /pullrequest: Process incoming GitHub payload
+   */
+   router.post('/:reviewsNeeded', _handlePREvent);
+   router.post('/', _handlePREvent);
 
-      if (!req.body) {
-        console.log('POST Request received, but no body!');
-        return debug('POST Request received, but no body!');
-      }
 
-      if (!req.body.repository) {
-        console.log('POST Request received, but no repo found.');
-        return debug('POST Request received, but no repo found.');
-      }
-      var repo = req.body.repository.name;
+  function _handlePREvent (req, res) {
+    var eventName = req.get("X-GitHub-Event");
+    // see if the reviewsNeeded was passed as param to the callback
+    if(req.params.reviewsNeeded && !isNaN(req.params.reviewsNeeded) && parseInt(req.params.reviewsNeeded, 0) > 1 ) {
+      config.reviewsNeeded = parseInt(req.params.reviewsNeeded, 0);
+    }
 
-      console.log("repo: " + repo);
-      // Check if it's a simple PR action
-      if (req.body.pull_request && req.body.pull_request.number) {
-          bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, processPullRequest);
-          console.log("respond: pr");
-          return _respond(res, 'Processing PR ' + req.body.pull_request.number);
-      }
-      // Check if it's an issue action (comment, for instance)
-      if (req.body.issue && req.body.issue.pull_request) {
-          bot.getPullRequest(req.body.issue.number, repo, function (pullRequests) {
-              if (!pullRequests || pullRequests.length < 0) {
-                console.log('Error: Tried to process single pull request, but failed');
-                return debug('Error: Tried to process single pull request, but failed');
-              }
+    // ensure we only handle events we know how to handle
+    if(eventName !== 'pull_request' && eventName !== 'pull_request_review_comment' && eventName !== 'issue_comment' ) {
+      console.log('POST Request received, but this is not the event I am looking for.');
+      return debug('POST Request received, but this is not the event I am looking for.');
+    }
 
-              bot.checkForLabel(pullRequests[0].number, repo, pullRequests[0], processPullRequest);
-          });
-          console.log("respond: issue");
-          return _respond(res, 'Processing PR as Issue' + req.body.issue.number);
-      }
-    });
+    if (!req.body) {
+      console.log('POST Request received, but no body!');
+      return debug('POST Request received, but no body!');
+    }
 
+    if (!req.body.repository) {
+      console.log('POST Request received, but no repo found.');
+      return debug('POST Request received, but no repo found.');
+    }
+    var repo = req.body.repository.name;
+
+    console.log("repo: " + repo);
+    // Check if it's a simple PR action
+    if (req.body.pull_request && req.body.pull_request.number) {
+        bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, processPullRequest);
+        console.log("respond: pr");
+        return _respond(res, 'Processing PR ' + req.body.pull_request.number);
+    }
+    // Check if it's an issue action (comment, for instance)
+    if (req.body.issue && req.body.issue.pull_request) {
+        bot.getPullRequest(req.body.issue.number, repo, function (pullRequests) {
+            if (!pullRequests || pullRequests.length < 0) {
+              console.log('Error: Tried to process single pull request, but failed');
+              return debug('Error: Tried to process single pull request, but failed');
+            }
+
+            bot.checkForLabel(pullRequests[0].number, repo, pullRequests[0], processPullRequest);
+        });
+        console.log("respond: issue");
+        return _respond(res, 'Processing PR as Issue' + req.body.issue.number);
+    }
+  }
 
 /**
  * Respond using a given Express res object

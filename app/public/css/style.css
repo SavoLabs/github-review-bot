@@ -1,3 +1,25 @@
 body {
-	
+
+}
+.layout-waterfall .mdl-layout__header-row .mdl-navigation__link:last-of-type  {
+  padding-right: 0;
+}
+
+.card-wide.mdl-card {
+  width: 512px;
+}
+.card-wide > .mdl-card__title {
+  color: #fff;
+  height: 176px;
+  background: url('../assets/demos/welcome_card.jpg') center / cover;
+}
+.card-wide > .mdl-card__menu {
+  color: #fff;
+}
+
+.page-content {
+}
+
+.align-right {
+	text-align: right;
 }

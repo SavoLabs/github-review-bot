@@ -28,18 +28,23 @@ function _authenticate() {
 	});
 }
 
-function enforce(repo, callback) {
+function enforce(repo, reviewsNeeded, callback) {
 	_authenticate();
+	console.log("reviewsNeeded: " + reviewsNeeded);
+	var resultReviewsNeeded = reviewsNeeded;
+	if(!resultReviewsNeeded || isNaN(resultReviewsNeeded) || resultReviewsNeeded < 1) {
+		resultReviewsNeeded = config.reviewsNeeded;
+	}
 	github.repos.createHook({
 		user: config.organization,
 		repo: repo,
 		name: "web",
 		config: {
 			content_type: "application/json",
-			url: config.botUrlRoot + "/pullrequest",
+			url: config.botUrlRoot + "/pullrequest/" + resultReviewsNeeded.toString(),
 			secret: config.webhookSecret
 		},
-		events: ['pull_request', 'issue_comment', 'pull_request_review_comment']
+		events: config.pullRequestEvents
 	}, function (err, result) {
 	  if(callback) {
 			callback(err,result);
@@ -354,10 +359,6 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 
 		for (var i = 0; i < result.length; i++) {
       var who = result[i].user.login;
-
-
-
-			console.log("who: " + who);
 			if (result[i].body) {
         var rbody = result[i].body;
 				isInstruction = (rbody.slice(0, 30).trim() === config.instructionsComment.slice(0, 30).trim());
@@ -365,11 +366,8 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				// skip all from bot
 				console.log(who + "::::" + config.username);
 				if(who.trim() === config.username.trim()) {
-					console.log("message from the bot");
-					console.log(rbody.slice(0, 30).trim());
 					var isShameComment = (rbody.slice(0, 30).trim() === "@" + createdBy + " " + config.shameComment.slice(0, 30 - (createdBy.length + 2)).trim());
 					if (isShameComment) {
-						console.log("found shame comment.");
 						// remember if we have shamed.
 						shamed = true;
 					}
@@ -377,11 +375,10 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				}
 				console.log(rbody);
 				if (lgtm.test(rbody)) {
+					console.log(rbody);
 					console.log("looks good match");
-					console.log("who: " + who + " --- createdBy: "+createdBy);
 					if(who === createdBy) {
 						// you can't vote on your own PR
-						console.log("shame! this is your PR")
 						needsShame = true;
 						continue;
 					}
@@ -405,7 +402,6 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 					console.log("needs work match");
 					if(who === createdBy) {
 						// you can't vote on your own PR
-						console.log("shame! this is your PR")
 						needsShame = true;
 						continue;
 					}
@@ -499,6 +495,16 @@ function updateLabels(prNumber, repo, approved, labels, callback) {
 	}
 }
 
+function getRepository( repo, callback ) {
+	_authenticate();
+	github.repos.get({
+		user: config.organization,
+		repo: repo
+	}, function(err, res) {
+		callback(res);
+	});
+}
+
 function getAllRepositories ( callback ) {
 	var page = 0;
 	_authenticate();
@@ -519,7 +525,12 @@ function postInstructionsComment(prNumber, repo, callback) {
 	 * @callback postInstructionsCommentCb
 	 * @param {Object} result - Result returned from GitHub
 	 */
-	postComment(prNumber, repo, config.instructionsComment, callback);
+	 var comment = config.instructionsComment;
+	 if (comment.indexOf('{reviewsNeeded}')) {
+ 	    comment = comment.replace('{reviewsNeeded}', config.reviewsNeeded);
+ 	}
+
+	postComment(prNumber, repo, comment, callback);
 }
 
 /**
@@ -554,6 +565,7 @@ function postComment(number, repo, comment, callback) {
 module.exports = {
 	getPullRequest: getPullRequest,
 	getPullRequests: getPullRequests,
+	getRepository: getRepository,
 	getAllRepositories: getAllRepositories,
 	checkForLabel: checkForLabel,
 	checkForApprovalComments: checkForApprovalComments,
