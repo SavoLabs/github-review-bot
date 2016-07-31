@@ -40,7 +40,6 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/assets/material-design-lite', express.static('node_modules/material-design-lite'));
-app.use('/assets/mdi', express.static('node_modules/mdi'));
 //app.use(express.cookieParser());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
