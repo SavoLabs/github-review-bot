@@ -1,174 +1,41 @@
-var GitHubApi = require('github'),
+var githubApi = require('./github'),
+	github = githubApi.service,
 	debug = require('debug')('reviewbot:bot'),
+
 	config = require('../config');
 
-var github = new GitHubApi({
-  debug: false,
-  protocol: "https",
-  host: "api.github.com", // should be api.github.com for GitHub
-  followRedirects: false, // default: true; there's currently an issue with non-get redirects, so allow ability to disable follow-redirects
-  timeout: 5000,
-	version: '3.0.0'
-});
 
-/**
- * Private: Authenticate next request
- */
-function _authenticate() {
-	if (!config.accessToken) {
-		throw Error('Fatal: No access token configured!');
-	}
-
-	github.authenticate({
-		type: "basic",
-    username: config.username,
-    password: config.accessToken
-		// type: 'oauth',
-		// token: config.oauth2token
-	});
-}
 
 function enforce(repo, reviewsNeeded, callback) {
-	_authenticate();
-	console.log("reviewsNeeded: " + reviewsNeeded);
 	var resultReviewsNeeded = reviewsNeeded;
 	if(!resultReviewsNeeded || isNaN(resultReviewsNeeded) || resultReviewsNeeded < 1) {
 		resultReviewsNeeded = config.reviewsNeeded;
 	}
-	github.repos.createHook({
-		user: config.organization,
-		repo: repo,
-		name: "web",
-		config: {
-			content_type: "application/json",
-			url: config.botUrlRoot + "/pullrequest/" + resultReviewsNeeded.toString(),
-			secret: config.webhookSecret
-		},
-		events: config.pullRequestEvents
-	}, function (err, result) {
-	  if(callback) {
-			callback(err,result);
-		}
-	});
+	var cbUrl = config.botUrlRoot + "/pullrequest/" + resultReviewsNeeded.toString()
+	githubApi.webhooks.createWebHook(repo, cbUrl, callback);
 }
 
 function unenforce(repo, callback) {
-
-	_getHook(repo, '/pullrequest', function(err, id) {
-		if(!id) {
+	githubApi.webhooks.getWebHookId(repo, '/pullrequest', function(err, id) {
+		if(!id || err) {
 			// no hook found, we can just return
 			callback(null, { result: 'ok'});
 			return;
 		}
-		_authenticate();
-		github.repos.deleteHook({
-			user: config.organization,
-			repo: repo,
-			id: id
-		}, function(err, reply) {
-			if(callback) {
-				callback(err, reply);
-			}
+		githubApi.webhooks.deleteWebHook(repo, id, function(err, reply) {
+			callback(err,reply);
 		});
 	});
 }
 
-function _getHook(repo, action, callback) {
-	_authenticate();
-	var result;
-	github.repos.getHooks({
-		user: config.organization,
-		repo: repo
-	}, function(err,hooks) {
-		if(hooks && hooks.length) {
-			hooks.forEach(function(hook) {
-				if(hook.name === 'web' && hook.config.url.match(config.botUrlRoot + action)) {
-					result = hook.id;
-				}
-			});
-		}
-		callback(null,result);
-	});
-}
-
-function _setStatus ( repo, pr, approved, remaining ) {
-	_authenticate();
+function _setStatus ( repo, pr, approved, remaining, callback ) {
 	var status = approved ? "success" : "pending";
 	var desc = approved ? "The number of reviews needed was successfull." : "Waiting for " + remaining + " code reviews...";
 	console.log("setting status as : " + status);
-	github.repos.createStatus({
-		user: config.organization,
-		repo: repo,
-		state: status,
-		sha: pr.head.sha,
-		context: "Peer Review Bot",
-		description: desc/*,
-		target_url: config.botUrlRoot + "/pr-status/" + repo + "/" + pr.id*/
-	}, function(err, reply) {
-		if(err) {
-			console.log(err);
-			console.log(reply);
-		}
-	});
-}
-
-
-/**
- * Fetch all pull requests in the currently configured repo
- * @callback {getPullRequestsCb} callback
- */
-function getPullRequests(repo, callback) {
-	_authenticate();
-
-	/**
-	* @callback getPullRequestsCb
-	* @param {Object[]} result - Returned pull request objects
-	*/
-	github.pullRequests.getAll({
-		user: config.organization,
-		repo: repo,
-		state: config.pullRequestStatus
-	}, function(error, result) {
-		if (error) {
-			return debug('getPullRequests: Error while fetching PRs: ', error);
-		}
-
-		if (!result || !result.length || result.length < 1) {
-			return debug('getPullRequests: No open PRs found');
-		}
-
-		if (callback) {
-			callback(result);
-		}
-	});
-}
-
-
-/**
- * Fetch a single pull requests in the currently configured repo
- * @callback {getPullRequestsCb} callback
- */
-function getPullRequest(prNumber, repo, callback) {
-	_authenticate();
-	/**
-	 * @callback getPullRequestsCb
-	 * @param {Object[]} result - Returned pull request objects
-	 */
-	debug('GitHub: Attempting to get PR #' + prNumber);
-
-	github.pullRequests.get({
-		user: config.organization,
-		repo: repo,
-		number: prNumber
-	}, function(error, result) {
-		if (error) {
-			return debug('getPullRequests: Error while fetching PRs: ' + error);
-		}
-
-		debug('GitHub: PR successfully recieved. Changed files: ' + result.changed_files);
-
-		if (callback) {
-			callback([result]);
+	console.log(desc);
+	githubApi.webhooks.createStatus(repo, status, pr.head.sha, desc, function(err, reply) {
+		if(callback) {
+			callback(err,reply);
 		}
 	});
 }
@@ -190,7 +57,7 @@ function checkForFiles(prNumber, repo, callback) {
 		return callback(true);
 	}
 
-	_authenticate();
+	githubApi.auth.authenticate();
 
 	github.pullRequests.getFiles({
 		user: config.organization,
@@ -218,7 +85,7 @@ function checkForFiles(prNumber, repo, callback) {
 }
 
 function checkForLabel (prNumber, repo, pr, callback) {
-	_authenticate();
+	githubApi.auth.authenticate();
 	/**
 	 * @callback checkForLabelCb
 	 * @param {Object} result - Object describing how the issue is labeled
@@ -269,20 +136,6 @@ function checkForLabel (prNumber, repo, pr, callback) {
 	});
 }
 
-var _knownRepos = [];
-function _getRepos ( err, res, callback) {
-		if(err){
-			return false;
-		}
-		_knownRepos = _knownRepos.concat(res);
-		if(github.hasNextPage(res)) {
-			github.getNextPage(res, function(err,res) { _getRepos(err,res,callback) });
-		} else {
-			if(callback) {
-				callback(_knownRepos);
-			}
-		}
-}
 
 /**
  * Check if a PR already has the instructions comment
@@ -290,7 +143,7 @@ function _getRepos ( err, res, callback) {
  * @callback {checkForInstructionsCommentCb} callback
  */
 function checkForInstructionsComment(prNumber, repo, callback) {
-	_authenticate();
+	githubApi.auth.authenticate();
 	/**
 	 * @callback checkForInstructionsCommentCb
 	 * @param {boolean} posted - Comment posted or not?
@@ -326,7 +179,7 @@ function checkForInstructionsComment(prNumber, repo, callback) {
  * @callback {checkForApprovalComments} callback
  */
 function checkForApprovalComments(prNumber, repo, pr, callback) {
-	_authenticate();
+	githubApi.auth.authenticate();
 	/**
 	 * @callback checkForApprovalCommentsCb
 	 * @param {boolean} approved - Approved or not?
@@ -364,7 +217,6 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				isInstruction = (rbody.slice(0, 30).trim() === config.instructionsComment.slice(0, 30).trim());
 
 				// skip all from bot
-				console.log(who + "::::" + config.username);
 				if(who.trim() === config.username.trim()) {
 					var isShameComment = (rbody.slice(0, 30).trim() === "@" + createdBy + " " + config.shameComment.slice(0, 30 - (createdBy.length + 2)).trim());
 					if (isShameComment) {
@@ -373,11 +225,11 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 					}
 					continue;
 				}
-				console.log(rbody);
+
 				if (lgtm.test(rbody)) {
-					console.log(rbody);
 					console.log("looks good match");
 					if(who === createdBy) {
+						console.log("shame exit")
 						// you can't vote on your own PR
 						needsShame = true;
 						continue;
@@ -388,10 +240,11 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 						console.log("User: " + who + " already voted. Skipping");
 						continue;
 					}
-					// isInstruction should never be true at this point. because we skip bot messages.
-					approvedCount = (isInstruction) ? approvedCount : approvedCount++;
 					// remember this person already voted.
 					voteUsers[voteUsers.length] = who;
+					console.log("voters");
+					console.log(voteUsers);
+
 					var whoIndex = whoWantMore.indexOf(who);
 					if (whoIndex >= 0 ) {
 						// this user did vote no, now they say yes.
@@ -401,13 +254,11 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				} else if (ngtm.test(rbody)) {
 					console.log("needs work match");
 					if(who === createdBy) {
+						console.log("shame exit");
 						// you can't vote on your own PR
 						needsShame = true;
 						continue;
 					}
-					// isInstruction should never be true at this point. because we skip bot messages.
-					approvedCount = (isInstruction) ? approvedCount : approvedCount--;
-
 					var whoIndex = voteUsers.indexOf(who);
 					if (whoIndex >= 0 ) {
 						// this user did vote yes, now they say no.
@@ -425,9 +276,13 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		if(!shamed && needsShame) {
 			postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
 		}
+		approvedCount = voteUsers.length;
+		console.log("people that want improvements: " + whoWantMore.length);
+		console.log("number of reviews needed for approval: " + config.reviewsNeeded);
+		console.log("number of people that say it's good: " + approvedCount);
 
 		approved = (approvedCount >= config.reviewsNeeded) && whoWantMore.length == 0;
-		_setStatus(repo, pr, approved, config.reviewsNeeded - approvedCount);
+		_setStatus(repo, pr, approved, config.reviewsNeeded - approvedCount, function(err,result) { });
 
 		if (callback) {
 			console.log("approved: "+ approved);
@@ -476,7 +331,7 @@ function updateLabels(prNumber, repo, approved, labels, callback) {
 	}
 
 	if (changed) {
-		_authenticate();
+		githubApi.auth.authenticate();
 		github.issues.edit({
 			user: config.organization,
 			repo: repo,
@@ -494,26 +349,6 @@ function updateLabels(prNumber, repo, approved, labels, callback) {
 		});
 	}
 }
-
-function getRepository( repo, callback ) {
-	_authenticate();
-	github.repos.get({
-		user: config.organization,
-		repo: repo
-	}, function(err, res) {
-		callback(res);
-	});
-}
-
-function getAllRepositories ( callback ) {
-	var page = 0;
-	_authenticate();
-	var req = github.repos.getAll({per_page: 100, visibility: 'all'}, function(err,res) {
-		_getRepos(err,res, callback);
-	});
-}
-
-
 
 /**
  * Post the instructions comment to a PR
@@ -544,7 +379,7 @@ function postComment(number, repo, comment, callback) {
 	 * @callback postCommentCb
 	 * @param {Object} result - Result returned from GitHub
 	 */
-	_authenticate();
+	githubApi.auth.authenticate();
 	github.issues.createComment({
 		user: config.organization,
 		repo: repo,
@@ -562,29 +397,8 @@ function postComment(number, repo, comment, callback) {
 	});
 }
 
-function isUserInOrganization(user, callback) {
-	_authenticate();
-	console.log("membership for " + user.username + " in " + config.organization);
-	github.orgs.getOrganizationMembership({
-		org: config.organization,
-		user: user.username
-	}, function(err, result) {
-		console.log(err);
-		console.log(result);
-		if(err){
-			callback(false);
-		} else {
-			callback(true);
-		}
-	});
-}
 
 module.exports = {
-	isUserInOrganization: isUserInOrganization,
-	getPullRequest: getPullRequest,
-	getPullRequests: getPullRequests,
-	getRepository: getRepository,
-	getAllRepositories: getAllRepositories,
 	checkForLabel: checkForLabel,
 	checkForApprovalComments: checkForApprovalComments,
 	checkForInstructionsComment: checkForInstructionsComment,
