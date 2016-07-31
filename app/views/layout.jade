@@ -1,0 +1,40 @@
+doctype html
+html
+  head
+    title
+      | :: Peer Review Bot ::
+      block title
+        | Home
+    link(rel='stylesheet', href='https://fonts.googleapis.com/icon?family=Material+Icons')
+    link(rel='stylesheet', href='https://code.getmdl.io/1.1.3/material.deep_purple-indigo.min.css')
+    link(rel='stylesheet', href='/public/css/style.css')
+    link(rel='stylesheet', href='/public/mdi/css/materialdesignicons.min.css')
+
+    link(rel="shortcut icon", type="image/png", src="/public/images/favicon16.png")
+    meta(name="msapplication-TileImage" content="/public/images/favicon144.png")
+    link(rel="apple-touch-icon-precomposed" sizes="152x152" href="/public/images/favicon152.png")
+    link(rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/images/favicon144.png")
+    link(rel="apple-touch-icon-precomposed" sizes="120x120" href="/public/images/favicon120.png")
+    link(rel="apple-touch-icon-precomposed" sizes="114x114" href="/public/images/favicon114.png")
+    link(rel="apple-touch-icon-precomposed" sizes="72x72" href="/public/images/favicon72.png")
+    link(rel="apple-touch-icon-precomposed" href="/public/images/favicon57.png")
+    link(rel="icon" sizes="32x32" href="/public/images/favicon32.png", type="image/png")
+    meta(property="og:image", content="/public/images/favicon152.png")
+    
+  body(class="mdl-color--grey-100 mdl-color-text--grey-700 mdl-base")
+      div(class="layout-waterfall mdl-layout mdl-js-layout")
+        header(class="mdl-layout__header mdl-layout__header--waterfall")
+          // top row - always visible
+          div(class="mdl-layout__header-row")
+            span(class="mdl-layout-title")
+              block title
+            div(class="mdl-layout-spacer")
+            div(class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right")
+              label(for="waterfall-exp", class="mdl-button mdl-js-button mdl-button--icon")
+                i(class="material-icons")="search"
+              div(class="mdl-textfield__expandable-holder")
+                input(type="text", name="search", class="mdl-textfield__input", id="waterfall-exp")
+        main(class="mdl-layout__content")
+          div(class="page-content")
+            block content
+    script(src='/public/material-design-lite/material.min.js')

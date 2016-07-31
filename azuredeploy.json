@@ -1,0 +1,128 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string"
+        },
+        "hostingPlanName": {
+            "type": "string"
+        },
+        "siteLocation": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string",
+            "allowedValues": [
+                "Free",
+                "Shared",
+                "Basic",
+                "Standard"
+            ],
+            "defaultValue": "Free"
+        },
+        "workerSize": {
+            "type": "string",
+            "allowedValues": [
+                "0",
+                "1",
+                "2"
+            ],
+            "defaultValue": "0"
+        },
+        "Bot: Github User Access Token": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "Bot: Github Webhook Secret": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "Bot: Root Url": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "Bot: Auth Client ID": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "Bot: Auth Client Secret": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "repoUrl": {
+            "type": "string",
+            "defaultValue": "https://github.com/SavoLabs/github-review-bot"
+        },
+        "branch": {
+            "type": "string",
+            "defaultValue": "develop"
+        }
+    },
+    "resources": [{
+        "apiVersion": "2014-06-01",
+        "name": "[parameters('hostingPlanName')]",
+        "type": "Microsoft.Web/serverFarms",
+        "location": "[parameters('siteLocation')]",
+        "properties": {
+            "name": "[parameters('hostingPlanName')]",
+            "sku": "[parameters('sku')]",
+            "workerSize": "[parameters('workerSize')]",
+            "numberOfWorkers": 1
+        }
+    }, {
+        "apiVersion": "2014-06-01",
+        "name": "[parameters('siteName')]",
+        "type": "Microsoft.Web/Sites",
+        "location": "[parameters('siteLocation')]",
+        "dependsOn": [
+            "[concat('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
+        ],
+        "tags": {
+            "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty"
+        },
+        "properties": {
+            "name": "[parameters('siteName')]",
+            "serverFarm": "[parameters('hostingPlanName')]"
+        },
+        "resources": [{
+            "apiVersion": "2014-04-01",
+            "type": "config",
+            "name": "web",
+            "dependsOn": [
+                "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
+            ],
+            "properties": {
+                "appSettings": [{
+                    "name": "GRB_ACCESS_TOKEN",
+                    "value": "[parameters('Bot: Github User Access Token')]"
+                }, {
+                    "name": "GRB_WEBHOOK_SECRET",
+                    "value": "[parameters('Bot: Github Webhook Secret')]"
+                }, {
+                    "name": "GRB_BOT_URL",
+                    "value": "[parameters('Bot: Root Url')]"
+                }, {
+                    "name": "GRB_AUTH_CLIENT_ID",
+                    "value": "[parameters('Bot: Auth Client ID')]"
+                }, {
+                    "name": "GRB_AUTH_CLIENT_SECRET",
+                    "value": "[parameters('Bot: Auth Client Secret')]"
+                }]
+            }
+        }, {
+            "apiVersion": "2014-04-01",
+            "name": "web",
+            "type": "sourcecontrols",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
+                "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/web')]"
+            ],
+            "properties": {
+                "RepoUrl": "[parameters('repoUrl')]",
+                "branch": "[parameters('branch')]",
+                "IsManualIntegration": true
+            }
+        }]
+    }]
+}
