@@ -30,47 +30,33 @@
             ],
             "defaultValue": "0"
         },
-        "Bot: Target GitHub User": {
+        "Bot: Github User Access Token": {
             "type": "string",
             "defaultValue": ""
         },
-        "Bot: Target GitHub Repo": {
+        "Bot: Github Webhook Secret": {
             "type": "string",
             "defaultValue": ""
         },
-        "Bot: OAuth Token": {
+        "Bot: Root Url": {
             "type": "string",
             "defaultValue": ""
         },
-        "Bot: Label Reviewed": {
+        "Bot: Auth Client ID": {
             "type": "string",
-            "defaultValue": "peer-reviewed"
+            "defaultValue": ""
         },
-        "Bot: Label Needs Review": {
+        "Bot: Auth Client Secret": {
             "type": "string",
-            "defaultValue": "needs-peer-review"
-        },
-        "Bot: Reviews Needed": {
-            "type": "int",
-            "defaultValue": 3
-        },
-        "Bot: Ignore PR with Label": {
-            "type": "string",
-            "defaultValue": "no-review"
-        },
-        "Bot: Only for PR Status": {
-            "type": "string",
-            "defaultValue": "open"
-        },
-        "Bot: Only for PR with Filenames": {
-            "type": "string",
-            "defaultValue": "[\"\"]"
+            "defaultValue": ""
         },
         "repoUrl": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "https://github.com/SavoLabs/github-review-bot"
         },
         "branch": {
-            "type": "string"
+            "type": "string",
+            "defaultValue": "develop"
         }
     },
     "resources": [{
@@ -108,32 +94,20 @@
             ],
             "properties": {
                 "appSettings": [{
-                    "name": "targetUser",
-                    "value": "[parameters('Bot: Target GitHub User')]"
+                    "name": "GRB_ACCESS_TOKEN",
+                    "value": "[parameters('Bot: Github User Access Token')]"
                 }, {
-                    "name": "targetRepo",
-                    "value": "[parameters('Bot: Target GitHub Repo')]"
+                    "name": "GRB_WEBHOOK_SECRET",
+                    "value": "[parameters('Bot: Github Webhook Secret')]"
                 }, {
-                    "name": "oauth2token",
-                    "value": "[parameters('Bot: OAuth Token')]"
+                    "name": "GRB_BOT_URL",
+                    "value": "[parameters('Bot: Root Url')]"
                 }, {
-                    "name": "labelReviewed",
-                    "value": "[parameters('Bot: Label Reviewed')]"
+                    "name": "GRB_AUTH_CLIENT_ID",
+                    "value": "[parameters('Bot: Auth Client ID')]"
                 }, {
-                    "name": "labelNeedsReview",
-                    "value": "[parameters('Bot: Label Needs Review')]"
-                }, {
-                    "name": "reviewsNeeded",
-                    "value": "[parameters('Bot: Reviews Needed')]"
-                }, {
-                    "name": "pullRequestStatus",
-                    "value": "[parameters('Bot: Only for PR Status')]"
-                },{
-                    "name": "excludeLabels",
-                    "value": "[parameters('Bot: Ignore PR with Label')]"
-                }, {
-                    "name": "filenameFilter",
-                    "value": "[parameters('Bot: Only for PR with Filenames')]"
+                    "name": "GRB_AUTH_CLIENT_SECRET",
+                    "value": "[parameters('Bot: Auth Client Secret')]"
                 }]
             }
         }, {
