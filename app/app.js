@@ -13,6 +13,7 @@ var logger = require('morgan'),
 		comment = require('./routes/comment'),
 		repos = require('./routes/repos'),
     login = require('./routes/login'),
+    managed = require('./routes/managed'),
     session = require('express-session'),
     app = express();
 
@@ -55,7 +56,9 @@ if(config.authClientID && config.authClientSecret) {
 app.use('/', routes);
 app.use('/pullrequest', pullrequest);
 app.use('/comment', comment);
+app.use('/managed', managed);
 app.use('/repos', repos);
+
 if(config.authClientID && config.authClientSecret) {
   app.use('/login', login);
 }
