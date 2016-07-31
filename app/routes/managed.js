@@ -12,6 +12,12 @@ var requireLoggedIn = function () {
 
 /* GET home page. */
 router.get('/', requireLoggedIn(), function (req, res) {
+	// this is so the page doesn't work
+	// this function needs to be fixed.
+	var err = new Error('Not Authorized.');
+	err.status = 403;
+	return err;
+
 	github.auth.isUserInOrganization(req.user, function(allowed) {
 		if(allowed) {
 			github.repos.getAll(function(repos) {
