@@ -4,7 +4,7 @@ var githubApi = require('./github-api'),
 	debug = require('debug')('reviewbot:bot'),
 	config = require('../../../config');
 
-function getRepository( repo, callback ) {
+function get( repo, callback ) {
 	auth.authenticate();
 	github.repos.get({
 		user: config.organization,
@@ -30,7 +30,7 @@ function _getRepos ( err, res, callback) {
 		}
 }
 
-function getAllRepositories ( callback ) {
+function getAll ( callback ) {
 	var page = 0;
 	_knownRepos = [];
 	auth.authenticate();
@@ -42,6 +42,6 @@ function getAllRepositories ( callback ) {
 
 
 module.exports = {
-	getAllRepositories: getAllRepositories,
-	getRepository: getRepository
+	getAll: getAll,
+	get: get
 };

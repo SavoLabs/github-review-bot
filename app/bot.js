@@ -28,72 +28,14 @@ function unenforce(repo, callback) {
 	});
 }
 
-function _setStatus ( repo, pr, approved, remaining ) {
+function _setStatus ( repo, pr, approved, remaining, callback ) {
 	var status = approved ? "success" : "pending";
 	var desc = approved ? "The number of reviews needed was successfull." : "Waiting for " + remaining + " code reviews...";
 	console.log("setting status as : " + status);
+	console.log(desc);
 	githubApi.webhooks.createStatus(repo, status, pr.head.sha, desc, function(err, reply) {
-		callback(err,reply);
-	});
-}
-
-
-/**
- * Fetch all pull requests in the currently configured repo
- * @callback {getPullRequestsCb} callback
- */
-function getPullRequests(repo, callback) {
-	githubApi.auth.authenticate();
-
-	/**
-	* @callback getPullRequestsCb
-	* @param {Object[]} result - Returned pull request objects
-	*/
-	github.pullRequests.getAll({
-		user: config.organization,
-		repo: repo,
-		state: config.pullRequestStatus
-	}, function(error, result) {
-		if (error) {
-			return debug('getPullRequests: Error while fetching PRs: ', error);
-		}
-
-		if (!result || !result.length || result.length < 1) {
-			return debug('getPullRequests: No open PRs found');
-		}
-
-		if (callback) {
-			callback(result);
-		}
-	});
-}
-
-
-/**
- * Fetch a single pull requests in the currently configured repo
- * @callback {getPullRequestsCb} callback
- */
-function getPullRequest(prNumber, repo, callback) {
-	githubApi.auth.authenticate();
-	/**
-	 * @callback getPullRequestsCb
-	 * @param {Object[]} result - Returned pull request objects
-	 */
-	debug('GitHub: Attempting to get PR #' + prNumber);
-
-	github.pullRequests.get({
-		user: config.organization,
-		repo: repo,
-		number: prNumber
-	}, function(error, result) {
-		if (error) {
-			return debug('getPullRequests: Error while fetching PRs: ' + error);
-		}
-
-		debug('GitHub: PR successfully recieved. Changed files: ' + result.changed_files);
-
-		if (callback) {
-			callback([result]);
+		if(callback) {
+			callback(err,reply);
 		}
 	});
 }
@@ -275,7 +217,6 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				isInstruction = (rbody.slice(0, 30).trim() === config.instructionsComment.slice(0, 30).trim());
 
 				// skip all from bot
-				console.log(who + "::::" + config.username);
 				if(who.trim() === config.username.trim()) {
 					var isShameComment = (rbody.slice(0, 30).trim() === "@" + createdBy + " " + config.shameComment.slice(0, 30 - (createdBy.length + 2)).trim());
 					if (isShameComment) {
@@ -284,11 +225,11 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 					}
 					continue;
 				}
-				console.log(rbody);
+
 				if (lgtm.test(rbody)) {
-					console.log(rbody);
 					console.log("looks good match");
 					if(who === createdBy) {
+						console.log("shame exit")
 						// you can't vote on your own PR
 						needsShame = true;
 						continue;
@@ -299,10 +240,11 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 						console.log("User: " + who + " already voted. Skipping");
 						continue;
 					}
-					// isInstruction should never be true at this point. because we skip bot messages.
-					approvedCount = (isInstruction) ? approvedCount : approvedCount++;
 					// remember this person already voted.
 					voteUsers[voteUsers.length] = who;
+					console.log("voters");
+					console.log(voteUsers);
+
 					var whoIndex = whoWantMore.indexOf(who);
 					if (whoIndex >= 0 ) {
 						// this user did vote no, now they say yes.
@@ -312,13 +254,11 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				} else if (ngtm.test(rbody)) {
 					console.log("needs work match");
 					if(who === createdBy) {
+						console.log("shame exit");
 						// you can't vote on your own PR
 						needsShame = true;
 						continue;
 					}
-					// isInstruction should never be true at this point. because we skip bot messages.
-					approvedCount = (isInstruction) ? approvedCount : approvedCount--;
-
 					var whoIndex = voteUsers.indexOf(who);
 					if (whoIndex >= 0 ) {
 						// this user did vote yes, now they say no.
@@ -336,9 +276,13 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		if(!shamed && needsShame) {
 			postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
 		}
+		approvedCount = voteUsers.length;
+		console.log("people that want improvements: " + whoWantMore.length);
+		console.log("number of reviews needed for approval: " + config.reviewsNeeded);
+		console.log("number of people that say it's good: " + approvedCount);
 
 		approved = (approvedCount >= config.reviewsNeeded) && whoWantMore.length == 0;
-		_setStatus(repo, pr, approved, config.reviewsNeeded - approvedCount);
+		_setStatus(repo, pr, approved, config.reviewsNeeded - approvedCount, function(err,result) { });
 
 		if (callback) {
 			console.log("approved: "+ approved);
@@ -455,8 +399,6 @@ function postComment(number, repo, comment, callback) {
 
 
 module.exports = {
-	getPullRequest: getPullRequest,
-	getPullRequests: getPullRequests,
 	checkForLabel: checkForLabel,
 	checkForApprovalComments: checkForApprovalComments,
 	checkForInstructionsComment: checkForInstructionsComment,

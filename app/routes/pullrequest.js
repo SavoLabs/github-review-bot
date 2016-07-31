@@ -1,5 +1,6 @@
 var express = require('express'),
     bot = require('../bot'),
+    githubApi = require('../github'),
     config = require('../../config'),
     debug = require('debug')('reviewbot:pullrequest'),
     router = express.Router();
@@ -29,7 +30,6 @@ var express = require('express'),
       console.log('POST Request received, but no body!');
       return debug('POST Request received, but no body!');
     }
-
     if (!req.body.repository) {
       console.log('POST Request received, but no repo found.');
       return debug('POST Request received, but no repo found.');
@@ -45,7 +45,7 @@ var express = require('express'),
     }
     // Check if it's an issue action (comment, for instance)
     if (req.body.issue && req.body.issue.pull_request) {
-        bot.getPullRequest(req.body.issue.number, repo, function (pullRequests) {
+        githubApi.pullrequests.get(req.body.issue.number, repo, function (pullRequests) {
             if (!pullRequests || pullRequests.length < 0) {
               console.log('Error: Tried to process single pull request, but failed');
               return debug('Error: Tried to process single pull request, but failed');

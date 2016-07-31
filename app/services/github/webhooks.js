@@ -63,7 +63,7 @@ function createStatus (repo, status, sha, description, callback) {
 		state: status,
 		sha: sha,
 		context: "Peer Review Bot",
-		description: desc/*,
+		description: description/*,
 		target_url: config.botUrlRoot + "/pr-status/" + repo + "/" + pr.id*/
 	}, function(err, reply) {
 		callback(err,reply);
