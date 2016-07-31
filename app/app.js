@@ -38,9 +38,9 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.use(logger('dev'));
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/public/material-design-lite', express.static('node_modules/material-design-lite'));
-app.use('/public/mdi', express.static('node_modules/mdi'));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+app.use('/assets/material-design-lite', express.static('node_modules/material-design-lite'));
+app.use('/assets/mdi', express.static('node_modules/mdi'));
 //app.use(express.cookieParser());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
