@@ -274,7 +274,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		}
 
 		if(!shamed && needsShame) {
-			postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
+			githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
 		}
 		approvedCount = voteUsers.length;
 		console.log("people that want improvements: " + whoWantMore.length);
@@ -365,36 +365,7 @@ function postInstructionsComment(prNumber, repo, callback) {
  	    comment = comment.replace('{reviewsNeeded}', config.reviewsNeeded);
  	}
 
-	postComment(prNumber, repo, comment, callback);
-}
-
-/**
- * Post a comment to an issue
- * @param {int} number - Number of the PR/issue to post to
- * @param {string} comment - Comment to post
- * @callback {postCommentCb} callback
- */
-function postComment(number, repo, comment, callback) {
-	/**
-	 * @callback postCommentCb
-	 * @param {Object} result - Result returned from GitHub
-	 */
-	githubApi.auth.authenticate();
-	github.issues.createComment({
-		user: config.organization,
-		repo: repo,
-		number: number,
-		body: comment
-	}, function(error, result) {
-		if (error) {
-			console.log('postComment: Error while trying to post instructions:');
-			console.log(error);
-			return debug('postComment: Error while trying to post instructions:', error);
-		}
-		if (callback) {
-			callback(result);
-		}
-	});
+	githubApi.comments.postComment(prNumber, repo, comment, callback);
 }
 
 
@@ -405,7 +376,6 @@ module.exports = {
 	checkForFiles: checkForFiles,
 	updateLabels: updateLabels,
 	postInstructionsComment: postInstructionsComment,
-	postComment: postComment,
 	enforce: enforce,
 	unenforce: unenforce
 };
