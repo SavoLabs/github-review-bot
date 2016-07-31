@@ -1,6 +1,6 @@
 var express = require('express'),
 		bot = require('../bot'),
-		githubApi = require('../github'),
+		github = require('../github'),
 		debug = require('debug')('reviewbot:comment'),
     router = express.Router(),
 		loginRoute = '/login';
@@ -17,9 +17,9 @@ var requireLoggedIn = function () {
 
 /* GET home page. */
 router.get('/', requireLoggedIn(), function (req, res) {
-		githubApi.auth.isUserInOrganization(req.user, function(allowed) {
+		github.auth.isUserInOrganization(req.user, function(allowed) {
 			if(allowed) {
-				githubApi.repos.getAll(function(result) {
+				github.repos.getAll(function(result) {
 					res.render('repos', { repos: result, user: req.user });
 				});
 			} else {
@@ -28,12 +28,12 @@ router.get('/', requireLoggedIn(), function (req, res) {
 		    err.status = 403;
 				return err;
 			}
-		})
+		});
 });
 
 router.get('/:repo', requireLoggedIn(), function (req, res) {
 	var output = [];
-	githubApi.repos.get(req.params.repo, function(result) {
+	github.repos.get(req.params.repo, function(result) {
 		res.render('repo-edit', { repo: result, user: req.user });
 	});
 });

@@ -31,11 +31,11 @@ function _getRepos ( err, res, callback) {
 }
 
 function getAll ( callback ) {
-	var page = 0;
 	_knownRepos = [];
 	auth.authenticate();
 
 	var req = github.repos.getAll({per_page: 100, visibility: 'all'}, function(err,res) {
+		var _knownRepos = [];
 		_getRepos(err,res, callback);
 	});
 }

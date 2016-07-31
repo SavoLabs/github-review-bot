@@ -4,6 +4,33 @@ var githubApi = require('./github-api'),
 	debug = require('debug')('reviewbot:bot'),
 	config = require('../../../config');
 
+	var _knownHooks = [];
+	function _getHooks ( err, res, repo, callback) {
+			if(err){
+				console.log(err);
+				return false;
+			}
+			_knownHooks = _knownHooks.concat(res);
+			if(github.hasNextPage(res)) {
+				github.getNextPage(res, function(err,res) { _getHooks(err,res,repo, callback) });
+			} else {
+				if(callback) {
+					callback(repo, _knownHooks);
+				}
+			}
+	}
+
+function getAll(repo, callback) {
+	auth.authenticate();
+	_knownHooks = [];
+	github.repos.getHooks({
+		user: config.organization,
+		repo: repo.name,
+		per_page: 100
+	}, function(err,res) {
+		_getHooks(err, res, repo, callback);
+	})
+}
 
 function createWebHook (repo, url, callback) {
 	auth.authenticate();
@@ -71,6 +98,7 @@ function createStatus (repo, status, sha, description, callback) {
 }
 
 module.exports = {
+	getAll: getAll,
 	createWebHook: createWebHook,
 	deleteWebHook: deleteWebHook,
 	getWebHookId: getWebHookId,
