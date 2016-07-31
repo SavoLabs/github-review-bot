@@ -562,7 +562,25 @@ function postComment(number, repo, comment, callback) {
 	});
 }
 
+function isUserInOrganization(user, callback) {
+	_authenticate();
+	console.log("membership for " + user.username + " in " + config.organization);
+	github.orgs.getOrganizationMembership({
+		org: config.organization,
+		user: user.username
+	}, function(err, result) {
+		console.log(err);
+		console.log(result);
+		if(err){
+			callback(false);
+		} else {
+			callback(true);
+		}
+	});
+}
+
 module.exports = {
+	isUserInOrganization: isUserInOrganization,
 	getPullRequest: getPullRequest,
 	getPullRequests: getPullRequests,
 	getRepository: getRepository,

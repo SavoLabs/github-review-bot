@@ -1,10 +1,13 @@
 
 var config = {};
 
-config.organization = 'savolabs';
+config.organization = 'SavoLabs';
 config.username = 'savo-ci';
 // include a `.env` file in the root
 // loaded in /bin/www
+config.authClientID = process.env.GRB_AUTH_CLIENT_ID;
+config.authClientSecret = process.env.GRB_AUTH_CLIENT_SECRET;
+
 config.accessToken = process.env.GRB_ACCESS_TOKEN;
 config.webhookSecret = process.env.GRB_WEBHOOK_SECRET;
 config.labelNeedsReview = 'needs-peer-review';
