@@ -100,7 +100,7 @@ function checkForLabel (prNumber, repo, pr, callback) {
 		repo: repo,
 		number: prNumber
 	}, function(error, result) {
-		var excludeLabels = config.excludeLabels.split(' '),
+		var excludeLabels = config.excludeLabels,
 			labeledNeedsReview = false,
 			labeledReviewed = false,
 			labeledExclude = false,
