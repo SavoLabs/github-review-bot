@@ -39,7 +39,7 @@ function createWebHook (repo, url, callback) {
 		repo: repo,
 		name: "web",
 		config: {
-			content_type: "application/json",
+			content_type: "json",
 			url: url,
 			secret: config.webhookSecret
 		},

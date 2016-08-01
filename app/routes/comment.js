@@ -1,5 +1,6 @@
 var express = require('express'),
     bot = require('../bot'),
+    github = require('../github'),
     debug = require('debug')('reviewbot:comment'),
     router = express.Router();
 
@@ -37,7 +38,7 @@ router.post('/', function (req, res) {
     var id = req.body.id,
         comment = req.body.comment;
 
-    bot.postComment(id, comment, function () {
+    github.comments.postComment(id, comment, function () {
         return _respond(res, 'Sucessfully posted comment');
     });
 });
