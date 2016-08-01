@@ -15,13 +15,20 @@ var express = require('express'),
 
   function _handlePREvent (req, res) {
     var eventName = req.get("X-GitHub-Event");
+    console.log("_handlePREvent::::");
+    if(req.params.reviewsNeeded) {
+      console.log("reviewsNeeded passed as param: " + req.params.reviewsNeeded);
+    } else {
+      console.log("No reviewsNeeded passed, using default from config: " + config.reviewsNeeded);
+    }
     // see if the reviewsNeeded was passed as param to the callback
-    if(req.params.reviewsNeeded && !isNaN(req.params.reviewsNeeded) && parseInt(req.params.reviewsNeeded, 0) > 1 ) {
+    if(req.params.reviewsNeeded && !isNaN(parseInt(req.params.reviewsNeeded,0)) && parseInt(req.params.reviewsNeeded, 0) > 0 ) {
+      console.log("setting reviewsNeeded to: " + req.params.reviewsNeeded);
       config.reviewsNeeded = parseInt(req.params.reviewsNeeded, 0);
     }
 
     // ensure we only handle events we know how to handle
-    if(eventName !== 'pull_request' && eventName !== 'pull_request_review_comment' && eventName !== 'issue_comment' ) {
+    if( config.pullRequestEvents.indexOf(eventName) < 0 ) {
       console.log('POST Request received, but this is not the event I am looking for.');
       return debug('POST Request received, but this is not the event I am looking for.');
     }
@@ -35,12 +42,9 @@ var express = require('express'),
       return debug('POST Request received, but no repo found.');
     }
     var repo = req.body.repository.name;
-
-    console.log("repo: " + repo);
     // Check if it's a simple PR action
     if (req.body.pull_request && req.body.pull_request.number) {
         bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, processPullRequest);
-        console.log("respond: pr");
         return _respond(res, 'Processing PR ' + req.body.pull_request.number);
     }
     // Check if it's an issue action (comment, for instance)
@@ -53,7 +57,6 @@ var express = require('express'),
 
             bot.checkForLabel(pullRequests[0].number, repo, pullRequests[0], processPullRequest);
         });
-        console.log("respond: issue");
         return _respond(res, 'Processing PR as Issue' + req.body.issue.number);
     }
   }
@@ -131,40 +134,5 @@ function processPullRequest(labelResult, pr) {
         });
     });
 }
-
-
-/**
- * GET /pullrequest: Process all pull requests
- */
-// router.get('/:repo', function (req, res) {
-//     bot.getPullRequests(function (req.params.repo, pullRequests) {
-//         var pr, i;
-//
-//         // For each PR, check for labels
-//         for (i = 0; i < pullRequests.length; i = i + 1) {
-//             pr = pullRequests[i];
-//             bot.checkForLabel(pr.number, req.params.repo, pr, processPullRequest);
-//         }
-//
-//         return _respond(res, 'Processing ' + pullRequests.length + ' PRs.');
-//     });
-// });
-
-/**
- * GET /pullrequest/:id: Process Single Pull Request
- */
-// router.get(':reviewsNeeded/:repo/:id', function (req, res) {
-//     debug('Received request to process PR #' + req.params.id);
-//
-//     bot.getPullRequest(req.params.id, req.params.repo, function (pullRequests) {
-//         if (pullRequests && pullRequests.length > 0) {
-//             bot.checkForLabel(req.params.id, req.params.repo, pullRequests[0], processPullRequest);
-//         } else {
-//             return debug('PR ' + req.params.id + ' not found');
-//         }
-//     });
-//
-//     return _respond(res, 'Processing PR #' + req.params.id);
-// });
 
 module.exports = router;
