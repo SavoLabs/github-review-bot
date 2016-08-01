@@ -19,11 +19,11 @@ config.instructionsComment = '';
 config.excludeLabels = 'no-review';
 config.filenameFilter = '';
 config.shameComment = ":bell: Shame! :bell: Shame!\nYou cannot vote to approve your own PR. 'A' for effort though.";
-config.lgtmRegex = /(^LGTM$)|(^Looks good to me!?$)|(^\:\+1\:$)/gmi;
-config.needsWorkRegex = /(^\:-1\:$)|(needs work)/gmi;
+config.lgtmRegex = /(\s*LGTM(?:\s+|$))|(Looks good to me!?(?:\s+|$))|(\s*:\+1:(?:\s+|$))/i;
+config.needsWorkRegex = /(\s*:-1:(?:\s+|$))|(\s*needs work(?:\s+|$))/i;
 config.pullRequestEvents = ['pull_request', 'issue_comment', 'pull_request_review_comment'];
 
-config.botUrlRoot = process.env.GRB_BOT_URL || 'http://live.bit13.com:3000';
+config.botUrlRoot = process.env.GRB_BOT_URL || 'http://peer-review-bot.azurewebsites.net';
 
 // Setup Instructions Comment
 if (config.instructionsComment === '') {

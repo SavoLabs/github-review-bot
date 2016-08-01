@@ -33,3 +33,7 @@ function postComment(number, repo, comment, callback) {
 		}
 	});
 }
+
+module.exports = {
+	postComment: postComment
+}

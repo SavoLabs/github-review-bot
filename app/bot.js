@@ -197,25 +197,27 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		perPage: 99
 	}, function(error, result) {
 		var lgtm = config.lgtmRegex,
-			approvedCount = 0,
-			isInstruction, approved,
+			approvedCount = 0, approved,
 			ngtm = config.needsWorkRegex;
+
 		if (error) {
 			console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
 			console.log(error);
 			return debug('checkForApprovalComments: Error while fetching coments for single PR: ', error);
 		}
+
     var voteUsers = [];
 		var whoWantMore = [];
 		var shamed = false;
 		var needsShame = false;
-
-		for (var i = 0; i < result.length; i++) {
-      var who = result[i].user.login;
-			if (result[i].body) {
-        var rbody = result[i].body;
-				isInstruction = (rbody.slice(0, 30).trim() === config.instructionsComment.slice(0, 30).trim());
-
+		console.log("fire");
+		for (var i = 0; i < result.length; ++i) {
+			var comment = result[i];
+			console.log("processing index: " + i);
+      var who = comment.user.login;
+			if (comment.body) {
+				console.log("processing comment: " + comment.id + " : " + comment.user.login + " : " + comment.body);
+        var rbody = comment.body.trim();
 				// skip all from bot
 				if(who.trim() === config.username.trim()) {
 					var isShameComment = (rbody.slice(0, 30).trim() === "@" + createdBy + " " + config.shameComment.slice(0, 30 - (createdBy.length + 2)).trim());
@@ -223,27 +225,28 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 						// remember if we have shamed.
 						shamed = true;
 					}
+					console.log("who: continue");
 					continue;
 				}
 
+				// test if it looks good
 				if (lgtm.test(rbody)) {
 					console.log("looks good match");
 					if(who === createdBy) {
-						console.log("shame exit")
 						// you can't vote on your own PR
 						needsShame = true;
+						console.log("lgtm shame: continue");
 						continue;
 					}
 
 					if(voteUsers.indexOf(who) >= 0 ) {
 						// user already voted.
 						console.log("User: " + who + " already voted. Skipping");
+						console.log("voted: continue");
 						continue;
 					}
 					// remember this person already voted.
 					voteUsers[voteUsers.length] = who;
-					console.log("voters");
-					console.log(voteUsers);
 
 					var whoIndex = whoWantMore.indexOf(who);
 					if (whoIndex >= 0 ) {
