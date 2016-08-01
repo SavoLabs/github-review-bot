@@ -197,25 +197,27 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		perPage: 99
 	}, function(error, result) {
 		var lgtm = config.lgtmRegex,
-			approvedCount = 0,
-			isInstruction, approved,
+			approvedCount = 0, approved,
 			ngtm = config.needsWorkRegex;
+
 		if (error) {
 			console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
 			console.log(error);
 			return debug('checkForApprovalComments: Error while fetching coments for single PR: ', error);
 		}
+
     var voteUsers = [];
 		var whoWantMore = [];
 		var shamed = false;
 		var needsShame = false;
-
-		for (var i = 0; i < result.length; i++) {
-      var who = result[i].user.login;
-			if (result[i].body) {
-        var rbody = result[i].body;
-				isInstruction = (rbody.slice(0, 30).trim() === config.instructionsComment.slice(0, 30).trim());
-
+		console.log("fire");
+		for (var i = 0; i < result.length; ++i) {
+			var comment = result[i];
+			console.log("processing index: " + i);
+      var who = comment.user.login;
+			if (comment.body) {
+				console.log("processing comment: " + comment.id + " : " + comment.user.login + " : " + comment.body);
+        var rbody = comment.body.trim();
 				// skip all from bot
 				if(who.trim() === config.username.trim()) {
 					var isShameComment = (rbody.slice(0, 30).trim() === "@" + createdBy + " " + config.shameComment.slice(0, 30 - (createdBy.length + 2)).trim());
@@ -223,27 +225,28 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 						// remember if we have shamed.
 						shamed = true;
 					}
+					console.log("who: continue");
 					continue;
 				}
 
+				// test if it looks good
 				if (lgtm.test(rbody)) {
 					console.log("looks good match");
 					if(who === createdBy) {
-						console.log("shame exit")
 						// you can't vote on your own PR
 						needsShame = true;
+						console.log("lgtm shame: continue");
 						continue;
 					}
 
 					if(voteUsers.indexOf(who) >= 0 ) {
 						// user already voted.
 						console.log("User: " + who + " already voted. Skipping");
+						console.log("voted: continue");
 						continue;
 					}
 					// remember this person already voted.
 					voteUsers[voteUsers.length] = who;
-					console.log("voters");
-					console.log(voteUsers);
 
 					var whoIndex = whoWantMore.indexOf(who);
 					if (whoIndex >= 0 ) {
@@ -274,7 +277,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		}
 
 		if(!shamed && needsShame) {
-			postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
+			githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
 		}
 		approvedCount = voteUsers.length;
 		console.log("people that want improvements: " + whoWantMore.length);
@@ -365,36 +368,7 @@ function postInstructionsComment(prNumber, repo, callback) {
  	    comment = comment.replace('{reviewsNeeded}', config.reviewsNeeded);
  	}
 
-	postComment(prNumber, repo, comment, callback);
-}
-
-/**
- * Post a comment to an issue
- * @param {int} number - Number of the PR/issue to post to
- * @param {string} comment - Comment to post
- * @callback {postCommentCb} callback
- */
-function postComment(number, repo, comment, callback) {
-	/**
-	 * @callback postCommentCb
-	 * @param {Object} result - Result returned from GitHub
-	 */
-	githubApi.auth.authenticate();
-	github.issues.createComment({
-		user: config.organization,
-		repo: repo,
-		number: number,
-		body: comment
-	}, function(error, result) {
-		if (error) {
-			console.log('postComment: Error while trying to post instructions:');
-			console.log(error);
-			return debug('postComment: Error while trying to post instructions:', error);
-		}
-		if (callback) {
-			callback(result);
-		}
-	});
+	githubApi.comments.postComment(prNumber, repo, comment, callback);
 }
 
 
@@ -405,7 +379,6 @@ module.exports = {
 	checkForFiles: checkForFiles,
 	updateLabels: updateLabels,
 	postInstructionsComment: postInstructionsComment,
-	postComment: postComment,
 	enforce: enforce,
 	unenforce: unenforce
 };
