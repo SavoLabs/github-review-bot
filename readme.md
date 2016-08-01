@@ -8,7 +8,7 @@ This is a node.js bot that checks repositories for Pull Requests to see if they
 the appropriate number of reviews. It will automatically label, and merge the PRs.
 
  _Peer Review Bot_ responds to Github WebHooks and labels PRs as 'needs-review' or as
-'peer-reviewed', depending on how many people had commented with a 'LGTM' or ':+1:'.
+'peer-reviewed', depending on how many people had commented with a 'LGTM' or ':+1:' or ':shipit:'.
 
 If anyone replies with 'needs work', or ':-1:' it will not 'move ahead' with
 the merge until that person follows up with 'LGTM' or ':+1:'.
@@ -33,12 +33,27 @@ he does not like that.
 
 ## Configuration
 
+#### For local development
+
 These values should be set in an `.env` file that is located in the root of the project. These
 values are then loaded into the environment when the bot initializes.
 
 - `env[GRB_ACCESS_TOKEN]` : A personal access token that is used to authenticate the user
 - `env[GRB_BOT_URL]` : The base url for the callbacks to the bot
 - `env[GRB_WEBHOOK_SECRET]` : A secret token that is provided to Github for verification
+- `env[GRB_AUTH_CLIENT_ID]` : Github oAuth2 client id
+- `env[GRB_AUTH_CLIENT_SECRET]` : Github oAuth2 client secret
+
+#### Azure
+
+You should set Application Settings for the following:
+
+- `GRB_ACCESS_TOKEN` : A personal access token that is used to authenticate the user
+- `GRB_BOT_URL` : The base url for the callbacks to the bot
+- `GRB_WEBHOOK_SECRET` : A secret token that is provided to Github for verification
+- `GRB_AUTH_CLIENT_ID` : Github oAuth2 client id
+- `GRB_AUTH_CLIENT_SECRET`: Github oAuth2 client secret
+- `WEBSITE_NODE_DEFAULT_VERSION` : The version of NodeJS to use. Tested with `v5.9.1`
 
 
 ## Endpoints
