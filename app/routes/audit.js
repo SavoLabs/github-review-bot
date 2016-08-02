@@ -14,7 +14,9 @@ var requireLoggedIn = function () {
 router.get('/', requireLoggedIn(), function (req, res) {
 	github.auth.isUserInOrganization(req.user, function(allowed) {
 		if(allowed) {
-
+			github.users.getAll("2fa_disabled", function(err,result) {
+				res.render("audit", {users: result});
+			});
 		} else {
 			console.log("not Authorized");
 			var err = new Error('Not Authorized.');

@@ -68,7 +68,7 @@ router.get('/', function (req, res) {
 			err.status = 403;
 			return err;
 		}
-	// });
+	 });
 
 });
 

@@ -1,0 +1,16 @@
+extends ./layout.jade
+block title
+	| User Audit
+block content
+	div(class="nav-bar")
+		a(class="mdl-button mdl-button--icon mdl-button--colored  mdl-button--fab mdl-js-button mdl-js-ripple-effect", href="/")
+			i(class="material-icons")="arrow_back"
+
+	unless users == null
+		ul
+			each u in users
+				li
+					img(src="#{u.avatar_url}", style="margin-right: 5px; height: 24px")
+					a(href="#{u.html_url}")=u.login
+	else
+		| nada
