@@ -21,11 +21,11 @@ config.reviewsNeeded = 3;
 // should the bot auto-merge the PR once reviewed?
 config.mergeOnReview = false;
 // pr's with this status will be monitored
-config.pullRequestsStatus = 'open';
+config.pullRequestsStatus = ['open'];
 // the initial comment by the bot, set below if not defined
 config.instructionsComment = '';
 // labels that if the bot sees it will not monitor the PR.
-config.excludeLabels = 'no-review';
+config.excludeLabels = ['no-review'];
 
 config.filenameFilter = '';
 // comment when the PR creator tries to approve their own PR.
@@ -41,7 +41,7 @@ config.botUrlRoot = process.env.GRB_BOT_URL || 'http://peer-review-bot.azurewebs
 // Setup Instructions Comment
 if (config.instructionsComment === '') {
     var comment = 'Hi! I\'m your friendly Peer Review Bot. For this Pull Request to be labeled as "peer-reviewed", ' +
-                  'you\'ll need at least {reviewsNeeded} comments containing the magic phrase "LGTM" or ":+1:". ' +
+                  'you\'ll need at least {reviewsNeeded} comments containing the magic phrase "LGTM", ":+1:", or ":shipit:". ' +
 									'\n\nIf someone replies with "Needs Work" or ":-1:", that same user will need to reply again with indicating ' +
 									'they approve of the changes.';
 
