@@ -23,7 +23,6 @@ body {
 }
 .card-wide > .mdl-card__title {
   color: #fff;
-  height: 176px;
   background: url('../assets/demos/welcome_card.jpg') center / cover;
 }
 .card-wide > .mdl-card__menu {

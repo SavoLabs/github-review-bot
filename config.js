@@ -41,7 +41,7 @@ config.botUrlRoot = process.env.GRB_BOT_URL || 'http://peer-review-bot.azurewebs
 // Setup Instructions Comment
 if (config.instructionsComment === '') {
     var comment = 'Hi! I\'m your friendly Peer Review Bot. For this Pull Request to be labeled as "peer-reviewed", ' +
-                  'you\'ll need at least {reviewsNeeded} comments containing the magic phrase "LGTM", ":+1:", or ":shipit:". ' +
+                  'you\'ll need at least {reviewsNeeded} comments containing the magic phrase "LGTM" or ":+1:". ' +
 									'\n\nIf someone replies with "Needs Work" or ":-1:", that same user will need to reply again with indicating ' +
 									'they approve of the changes.';
 
