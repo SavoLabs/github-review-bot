@@ -15,7 +15,6 @@ var express = require('express'),
 
   function _handlePREvent (req, res) {
     var eventName = req.get("X-GitHub-Event");
-    console.log("_handlePREvent::::");
     if(req.params.reviewsNeeded) {
       console.log("reviewsNeeded passed as param: " + req.params.reviewsNeeded);
     } else {
@@ -23,7 +22,6 @@ var express = require('express'),
     }
     // see if the reviewsNeeded was passed as param to the callback
     if(req.params.reviewsNeeded && !isNaN(parseInt(req.params.reviewsNeeded,0)) && parseInt(req.params.reviewsNeeded, 0) > 0 ) {
-      console.log("setting reviewsNeeded to: " + req.params.reviewsNeeded);
       config.reviewsNeeded = parseInt(req.params.reviewsNeeded, 0);
     }
 
@@ -44,9 +42,16 @@ var express = require('express'),
     var repo = req.body.repository.name;
     // Check if it's a simple PR action
     if (req.body.pull_request && req.body.pull_request.number) {
-        bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, processPullRequest);
-        return _respond(res, 'Processing PR ' + req.body.pull_request.number);
+
+      if ( req.body.pull_request.state && config.pullRequestsStatus.indexOf(req.body.pull_request.state) < 0 ) {
+        console.log("POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
+        return debug("POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
+      }
+
+      bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, processPullRequest);
+      return _respond(res, 'Processing PR ' + req.body.pull_request.number);
     }
+
     // Check if it's an issue action (comment, for instance)
     if (req.body.issue && req.body.issue.pull_request) {
         githubApi.pullrequests.get(req.body.issue.number, repo, function (pullRequests) {
@@ -54,8 +59,12 @@ var express = require('express'),
               console.log('Error: Tried to process single pull request, but failed');
               return debug('Error: Tried to process single pull request, but failed');
             }
-
-            bot.checkForLabel(pullRequests[0].number, repo, pullRequests[0], processPullRequest);
+            var pr0 = pullRequests[0];
+            if ( pr0.state && config.pullRequestsStatus.indexOf(pr0.state) < 0 ) {
+              console.log("POST Request received, but the PR is in a state that I do not care about (" + pr0.state + ").");
+              return debug("POST Request received, but the PR is in a state that I do not care about (" + pr0.state + ").");
+            }
+            bot.checkForLabel(pr0.number, repo, pr0, processPullRequest);
         });
         return _respond(res, 'Processing PR as Issue' + req.body.issue.number);
     }
