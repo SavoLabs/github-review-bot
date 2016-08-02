@@ -29,6 +29,11 @@ he does not like that.
 
 ![Shame!](http://i.imgur.com/Fb6VGdY.png)
 
+Once the Pull Request has the needed number of reviews, _Peer Review Bot_ will
+update the check status as `Passed`.
+
+![Passed!](http://i.imgur.com/QkQhKXC.png)
+
 ---
 
 ## Configuration

@@ -11,7 +11,8 @@ var logger = require('morgan'),
     routes = require('./routes/index'),
     pullrequest = require('./routes/pullrequest'),
 		comment = require('./routes/comment'),
-		repos = require('./routes/repos'),
+    repos = require('./routes/repos'),
+    audit = require('./routes/audit'),
     login = require('./routes/login'),
     managed = require('./routes/managed'),
     session = require('express-session'),
@@ -58,6 +59,7 @@ app.use('/pullrequest', pullrequest);
 app.use('/comment', comment);
 app.use('/managed', managed);
 app.use('/repos', repos);
+app.use('/audit', audit);
 
 if(config.authClientID && config.authClientSecret) {
   app.use('/login', login);
