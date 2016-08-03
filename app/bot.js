@@ -360,10 +360,10 @@ function updateLabels(prNumber, repo, approved, labels, callback) {
  */
 function postInstructionsComment(prNumber, repo, callback) {
 	// Check for instructions comment and post if not present
-	_checkForInstructionsComment(pr.number, pr.head.repo.name, function (posted) {
+	_checkForInstructionsComment(prNumber, repo, function (posted) {
 		if (!posted) {
-			console.log('No intructions comment found on PR ' + pr.number + '; posting instructions comment');
-			debug('No intructions comment found on PR ' + pr.number + '; posting instructions comment');
+			console.log('No intructions comment found on PR ' + prNumber + '; posting instructions comment');
+			debug('No intructions comment found on PR ' + prNumber + '; posting instructions comment');
 			/**
 			* @callback postInstructionsCommentCb
 			* @param {Object} result - Result returned from GitHub
