@@ -32,8 +32,8 @@ config.filenameFilter = '';
 config.shameComment = ":bell: Shame! :bell: Shame!\nYou cannot vote to approve your own PR. 'A' for effort though.";
 // regex for "looks good"
 // do not use /g it causes failures on successful matches
-config.lgtmRegex = /((?:\s*LGTM(?:\s+|$))|(?:\s*looks good(?:\sto me!?)?(?:\s+|$))|(?:\s*:\+1:(?:\s+|$))|(?:\s*:shipit:(?:\s+|$)))/i;
-config.needsWorkRegex = /((?:\s*:-1:(?:\s+|$))|(?:\s*needs work(?:\s+|$)))/i;
+config.lgtmRegex = /((?:\s*LGTM(?:\s+|$))|(?:\s*looks good(?:\sto me!?)?(?:\s+|$))|(?:\s*:\+1:(?:\s+|$))|(?:\s*:shipit:(?:\s+|$))|(?:\s*👍(?:\s+|$)))/i;
+config.needsWorkRegex = /((?:\s*:-1:(?:\s+|$))|(?:\s*needs work(?:\s+|$))|(?:\s*👎(?:\s+|$)))/i;
 config.pullRequestEvents = ['pull_request', 'issue_comment', 'pull_request_review_comment'];
 
 config.botUrlRoot = process.env.GRB_BOT_URL || 'http://peer-review-bot.azurewebsites.net';
