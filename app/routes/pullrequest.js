@@ -113,13 +113,7 @@ function processPullRequest(labelResult, pr) {
             var labels, output = [];
 
             // Check for instructions comment and post if not present
-            bot.checkForInstructionsComment(pr.number, pr.head.repo.name, function (posted) {
-              if (!posted) {
-                console.log('No intructions comment found on PR ' + pr.number + '; posting instructions comment');
-                debug('No intructions comment found on PR ' + pr.number + '; posting instructions comment');
-                bot.postInstructionsComment(pr.number, pr.head.repo.name);
-              }
-            });
+            bot.postInstructionsComment(pr.number, pr.head.repo.name);
 
             // Stop if we already marked it as 'needs-review' and it does need more reviews
             if (labelResult.labeledNeedsReview && !approved) {

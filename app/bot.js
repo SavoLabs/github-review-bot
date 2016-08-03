@@ -142,7 +142,7 @@ function checkForLabel (prNumber, repo, pr, callback) {
  * @param {int} prNumber - Number of PR to check
  * @callback {checkForInstructionsCommentCb} callback
  */
-function checkForInstructionsComment(prNumber, repo, callback) {
+function _checkForInstructionsComment(prNumber, repo, callback) {
 	githubApi.auth.authenticate();
 	/**
 	 * @callback checkForInstructionsCommentCb
@@ -359,23 +359,30 @@ function updateLabels(prNumber, repo, approved, labels, callback) {
  * @callback {postInstructionsCommentCb} callback
  */
 function postInstructionsComment(prNumber, repo, callback) {
-	/**
-	 * @callback postInstructionsCommentCb
-	 * @param {Object} result - Result returned from GitHub
-	 */
-	 var comment = config.instructionsComment;
-	 if (comment.indexOf('{reviewsNeeded}')) {
- 	    comment = comment.replace('{reviewsNeeded}', config.reviewsNeeded);
- 	}
+	// Check for instructions comment and post if not present
+	_checkForInstructionsComment(pr.number, pr.head.repo.name, function (posted) {
+		if (!posted) {
+			console.log('No intructions comment found on PR ' + pr.number + '; posting instructions comment');
+			debug('No intructions comment found on PR ' + pr.number + '; posting instructions comment');
+			/**
+			* @callback postInstructionsCommentCb
+			* @param {Object} result - Result returned from GitHub
+			*/
+			var comment = config.instructionsComment;
+			if (comment.indexOf('{reviewsNeeded}')) {
+					comment = comment.replace('{reviewsNeeded}', config.reviewsNeeded);
+			}
 
-	githubApi.comments.postComment(prNumber, repo, comment, callback);
+			githubApi.comments.postComment(prNumber, repo, comment, callback);
+		}
+	});
+
 }
 
 
 module.exports = {
 	checkForLabel: checkForLabel,
 	checkForApprovalComments: checkForApprovalComments,
-	checkForInstructionsComment: checkForInstructionsComment,
 	checkForFiles: checkForFiles,
 	updateLabels: updateLabels,
 	postInstructionsComment: postInstructionsComment,
