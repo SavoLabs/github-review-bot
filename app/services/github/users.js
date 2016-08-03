@@ -14,7 +14,6 @@ function _getAllUsers ( err, res, callback ) {
 		github.getNextPage(res, function(err,res) { _getAllUsers(err,res,callback) });
 	} else {
 		if(callback) {
-			console.log(_knownUsers);
 			callback(err,_knownUsers);
 		}
 	}
@@ -22,13 +21,13 @@ function _getAllUsers ( err, res, callback ) {
 
 function getAll(filter, callback) {
 	auth.authenticate();
+	_knownUsers = [];
 
 	github.orgs.getMembers({
 		org: config.organization,
 		filter: filter ? filter : 'all',
 		per_page: 100
 	}, function(err,res) {
-		var _knownUsers = [];
 		_getAllUsers(err,res, callback);
 	});
 }
