@@ -1,0 +1,32 @@
+{
+  "name": "Peer Review Bot",
+  "description": "A bot to make sure all pull requests are reviewed by peers before merging.",
+  "keywords": [ "productivity", "github", "bot" ],
+  "repository": "https://github.com/savolabs/github-review-bot",
+  "env": {
+    "GRB_ACCESS_TOKEN": {
+      "description": "A personal access token that is used to authenticate the user",
+      "value": "",
+			"required": true
+    },
+    "GRB_WEBHOOK_SECRET": {
+      "description": "A secret token that is provided to Github for verification",
+			"generator": "secret",
+    },
+		"GRB_BOT_URL": {
+      "description": "The base url for the callbacks to the bot",
+      "value": "",
+			"required": true
+    },
+		"GRB_AUTH_CLIENT_ID": {
+      "description": "Github oAuth2 client id",
+      "value": "",
+			"required": true
+    },
+		"GRB_AUTH_CLIENT_SECRET": {
+      "description": "Github oAuth2 client secret",
+      "value": "",
+			"required": true
+    }
+  }
+}

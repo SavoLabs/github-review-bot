@@ -10,9 +10,9 @@ var requireLoggedIn = function () {
 	return require('connect-ensure-login').ensureLoggedIn(loginRoute);
 };
 
-function _renderManaged ( req, res, data ) {
+function _renderNonmanaged ( req, res, data ) {
 	var dataObject = { repos: data, user: req.user };
-	res.render('managed', dataObject);
+	res.render('nonmanaged', dataObject);
 }
 
 /* GET home page. */
@@ -38,7 +38,7 @@ router.get('/', requireLoggedIn(), function (req, res) {
 								x.config.url &&
 								x.url.indexOf(r.name) > 0 &&
 								hasEvent &&
-								x.config.url.substring(0,config.botUrlRoot.length) === config.botUrlRoot
+								x.config.url.substring(0,config.botUrlRoot.length) !== config.botUrlRoot
 						});
 						for(var y = 0; y < filtered.length; ++y) {
 							var hook = filtered[y];
@@ -49,7 +49,7 @@ router.get('/', requireLoggedIn(), function (req, res) {
 						}
 						processedCount++;
 						if (processedCount >= repos.length) {
-							_renderManaged(req, res, managedList);
+							_renderNonmanaged(req, res, managedList);
 						}
 					});
 
