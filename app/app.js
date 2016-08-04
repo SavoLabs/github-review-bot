@@ -59,7 +59,7 @@ app.use('/', routes);
 app.use('/pullrequest', pullrequest);
 app.use('/comment', comment);
 app.use('/managed', managed);
-app.use('/unmanaged', unmanaged);
+app.use('/nonmanaged', unmanaged);
 app.use('/repos', repos);
 app.use('/audit', audit);
 

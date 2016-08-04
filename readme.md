@@ -83,5 +83,5 @@ that defines all the information for a Heroku deployment.
 - `/repos/:repo` : configure the specified repo that should be monitored
 - `/audit` : a page that shows all users in the organization that do not have 2-factor enabled
 - `/managed` : lists all the repositories that currently have webhooks defined for the peer review bot
-- `/unmanaged` : lists all the repositories that currently do not have webhooks defined for the peer review bot
+- `/nonmanaged` : lists all the repositories that currently do not have webhooks defined for the peer review bot
 - `/pullrequest` : endpoint for the webhook to notify of the pull request
