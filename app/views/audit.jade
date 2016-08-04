@@ -6,11 +6,17 @@ block content
 		a(class="mdl-button mdl-button--icon mdl-button--colored  mdl-button--fab mdl-js-button mdl-js-ripple-effect", href="/")
 			i(class="material-icons")="arrow_back"
 
+	ul(class="mdl-list")
+		li(class="mdl-list__item")
+			span(class="mdl-list__item-text-body")
+				| This is a list of all users in the organization that do not have 2-factor authentication enabled.
+
 	unless users == null
-		ul
+		ul(class="mdl-list")
 			each u in users
-				li
-					img(src="#{u.avatar_url}", style="margin-right: 5px; height: 24px")
-					a(href="#{u.html_url}")=u.login
+				li(class="mdl-list__item")
+					span(class="mdl-list__item-primary-content")
+						img(src="#{u.avatar_url}", class="mdl-list__item-avatar")
+						a(href="#{u.html_url}", class="mdl-list__item-secondary-action")=u.login
 	else
-		| nada
+		| All users have 2-factor authentication enabled.

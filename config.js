@@ -36,7 +36,11 @@ config.lgtmRegex = /((?:\s*LGTM(?:\s+|$))|(?:\s*looks good(?:\sto me!?)?(?:\s+|$
 config.needsWorkRegex = /((?:\s*:-1:(?:\s+|$))|(?:\s*needs work(?:\s+|$))|(?:\s*👎(?:\s+|$)))/i;
 config.pullRequestEvents = ['pull_request', 'issue_comment', 'pull_request_review_comment'];
 
-config.botUrlRoot = process.env.GRB_BOT_URL || 'http://peer-review-bot.azurewebsites.net';
+config.botUrlRoot = process.env.GRB_BOT_URL;
+
+if ( config.botUrlRoot == null ) {
+	throw new Error("Missing configuration value for botUrlRoot");
+}
 
 // Setup Instructions Comment
 if (config.instructionsComment === '') {

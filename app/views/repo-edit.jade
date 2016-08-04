@@ -19,7 +19,6 @@ block content
 						div(class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label")
 							label(for="reviews_#{repo.id}", class="mdl-textfield__label")="Required Reviews"
 							input(type="number", name="reviewsNeeded", value="3", id="reviews_#{repo.id}", class="mdl-textfield__input")
-							span(class="mdl-textfield__error")="Value must be number"
 					div(class="mdl-card__actions align-right mdl-card--border")
 						button(type="submit", class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored")="Register Bot"
 						a(class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect",href="/repos/unenforce/#{repo.name}")="Deregister Bot"
