@@ -31,6 +31,12 @@ var express = require('express'),
       return debug('POST Request received, but this is not the event I am looking for.');
     }
 
+		// assigned causes the bot to spam the instructions comment.
+		if(req.body.action && req.body.action === "assigned") {
+			console.log('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+      return debug('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+		}
+
     if (!req.body) {
       console.log('POST Request received, but no body!');
       return debug('POST Request received, but no body!');
@@ -39,6 +45,8 @@ var express = require('express'),
       console.log('POST Request received, but no repo found.');
       return debug('POST Request received, but no repo found.');
     }
+
+
     var repo = req.body.repository.name;
     // Check if it's a simple PR action
     if (req.body.pull_request && req.body.pull_request.number) {
