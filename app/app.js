@@ -15,7 +15,7 @@ var logger = require('morgan'),
     audit = require('./routes/audit'),
     login = require('./routes/login'),
 		managed = require('./routes/managed'),
-		unmanaged = require('./routes/unmanaged'),
+		nonmanaged = require('./routes/nonmanaged'),
     session = require('express-session'),
     app = express();
 
@@ -59,7 +59,7 @@ app.use('/', routes);
 app.use('/pullrequest', pullrequest);
 app.use('/comment', comment);
 app.use('/managed', managed);
-app.use('/nonmanaged', unmanaged);
+app.use('/nonmanaged', nonmanaged);
 app.use('/repos', repos);
 app.use('/audit', audit);
 
