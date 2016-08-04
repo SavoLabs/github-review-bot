@@ -16,7 +16,7 @@ block content
 			each u in users
 				li(class="mdl-list__item")
 					span(class="mdl-list__item-primary-content")
-						img(src="#{u.avatar_url}", style="margin-right: 5px; height: 24px", class="mdl-list__item-avatar")
-						a(href="#{u.html_url}")=u.login
+						img(src="#{u.avatar_url}", class="mdl-list__item-avatar")
+						a(href="#{u.html_url}", class="mdl-list__item-secondary-action")=u.login
 	else
 		| All users have 2-factor authentication enabled.
