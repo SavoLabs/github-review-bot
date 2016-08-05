@@ -42,13 +42,25 @@ router.get('/', requireLoggedIn(), function (req, res) {
 						});
 						for(var y = 0; y < filtered.length; ++y) {
 							var hook = filtered[y];
-							managedList[managedList.length] = {
-								hook: hook,
-								repo: r
-							};
+							if(managedList.filter(function(t) { return t.repo.name === r.name; }).length === 0) {
+								managedList[managedList.length] = {
+									hook: hook,
+									repo: r
+								};
+							}
 						}
 						processedCount++;
 						if (processedCount >= repos.length) {
+							// sort the items
+							managedList.sort(function(a,b) {
+								if(a.repo.name.toLowerCase() < b.repo.name.toLowerCase()) {
+									return -1;
+								} else if ( a.repo.name.toLowerCase() > b.repo.name.toLowerCase()) {
+									return 1;
+								} else {
+									return 0;
+								}
+							});
 							_renderManaged(req, res, managedList);
 						}
 					});
