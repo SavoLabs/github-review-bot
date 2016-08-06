@@ -5,4 +5,5 @@ EXPOSE 3000
 
 COPY . /github-review-bot
 WORKDIR /github-review-bot
-RUN npm install && npm start
+RUN npm install
+ENTRYPOINT ["npm", "start"]

@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "A github review bot",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SavoLabs/github-review-bot"
+  },
   "dependencies": {
     "body-parser": "^1.15.2",
     "connect-ensure-login": "^0.1.1",
@@ -20,16 +24,19 @@
     "passport-github": "^1.1.0"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "grunt": "^1.0.1",
     "grunt-contrib-jshint": "^1.0.0",
     "grunt-jscodesniffer": "^0.1.10",
     "grunt-jscs": "^3.0.1",
-    "load-grunt-tasks": "^3.5.0"
+    "istanbul": "^0.4.4",
+    "load-grunt-tasks": "^3.5.0",
+    "mocha": "^3.0.1"
   },
   "scripts": {
     "start": "node ./bin/www",
-    "test": "echo \"Error: no test specified\" && exit 0"
+    "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "author": "Ryan Conrad",
-  "license": "ISC"
+  "author": "Savo",
+  "license": "MIT"
 }
