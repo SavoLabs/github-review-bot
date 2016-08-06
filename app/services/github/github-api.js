@@ -7,8 +7,11 @@ var github = new GitHubApi({
   protocol: "https",
   host: "api.github.com", // should be api.github.com for GitHub
   followRedirects: false, // default: true; there's currently an issue with non-get redirects, so allow ability to disable follow-redirects
-  timeout: 5000,
-	version: '3.0.0'
+  timeout: 8000,
+	version: '3.0.0',
+	headers: {
+		"Accept": "application/vnd.github.squirrel-girl-preview; */*"
+	}
 });
 
 module.exports = {

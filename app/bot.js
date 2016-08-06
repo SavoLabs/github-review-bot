@@ -225,7 +225,6 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 						// remember if we have shamed.
 						shamed = true;
 					}
-					console.log("who: continue");
 					continue;
 				}
 
@@ -279,18 +278,61 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		if(!shamed && needsShame) {
 			githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
 		}
-		approvedCount = voteUsers.length;
-		console.log("people that want improvements: " + whoWantMore.length);
-		console.log("number of reviews needed for approval: " + config.reviewsNeeded);
-		console.log("number of people that say it's good: " + approvedCount);
 
-		approved = (approvedCount >= config.reviewsNeeded) && whoWantMore.length == 0;
-		_setStatus(repo, pr, approved, config.reviewsNeeded - approvedCount, function(err,result) { });
+		// process the reactions on the PR
+		// currently, reactions do not trigger a webhook event
+		// so it does not trigger a processing of the PR
+		githubApi.reactions.getForPullRequest(repo, prNumber, function( err, res ) {
+			for(var i = 0; i < res.length; ++i) {
+				var reaction = res[i];
+				var who = reaction.user.login;
+				if (who === createdBy ) {
+					continue;
+				}
 
-		if (callback) {
-			console.log("approved: "+ approved);
-			callback(approved);
-		}
+				if(config.lgtmReactions.indexOf(reaction.content) >= 0) {
+					// looks good
+					if ( voteUsers.indexOf(who) >= 0 ) {
+						// already voted
+						continue;
+					}
+					// remember this person already voted.
+					voteUsers[voteUsers.length] = who;
+					var whoIndex = whoWantMore.indexOf(who);
+					if (whoIndex >= 0 ) {
+						// this user did vote no, now they say yes.
+						// so we can now remove them from the whoWantMore
+						whoWantMore.splice(whoIndex,1);
+					}
+				} else if (config.needsWorkReactions.indexOf(reaction.content) >= 0 ) {
+					// needs work
+					var whoIndex = voteUsers.indexOf(who);
+					if (whoIndex >= 0 ) {
+						voteUsers.splice(whoIndex,1);
+					}
+
+					if(whoWantMore.indexOf(who) < 0) {
+						whoWantMore[whoWantMore.length] = who;
+					}
+				}
+
+
+			}
+
+			// after we check reactions
+			approvedCount = voteUsers.length;
+			console.log("people that want improvements: " + whoWantMore.length);
+			console.log("number of reviews needed for approval: " + config.reviewsNeeded);
+			console.log("number of people that say it's good: " + approvedCount);
+
+			approved = (approvedCount >= config.reviewsNeeded) && whoWantMore.length == 0;
+			_setStatus(repo, pr, approved, config.reviewsNeeded - approvedCount, function(err,result) { });
+
+			if (callback) {
+				console.log("approved: "+ approved);
+				callback(approved);
+			}
+		});
 	});
 }
 
