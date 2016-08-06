@@ -33,6 +33,9 @@ config.lgtmReactions = ["+1", "heart", "hooray"];
 // the reactions that will identify as "needs work"
 config.needsWorkReactions = ["-1", "confused"];
 
+config.enableRepositoryHook = true;
+config.repositoryHookEvents = ['created'];
+
 config.filenameFilter = '';
 // comment when the PR creator tries to approve their own PR.
 config.shameComment = ":bell: Shame! :bell: Shame!\nYou cannot vote to approve your own PR. 'A' for effort though.";

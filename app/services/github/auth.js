@@ -35,7 +35,17 @@ var githubApi = require('./github-api'),
 		});
 	}
 
+	function isXHubValid(req, callback) {
+		if(!req.isXHub) {
+			callback(true);
+			return
+		}
+
+		callback(req.isXHubValid());
+	}
+
 	module.exports = {
 		authenticate: authenticate,
-		isUserInOrganization: isUserInOrganization
+		isUserInOrganization: isUserInOrganization,
+		isXHubValid: isXHubValid
 	};

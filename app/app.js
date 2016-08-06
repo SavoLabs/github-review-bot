@@ -6,6 +6,7 @@ var Strategy = require('passport-github').Strategy;
 var path = require('path');
 
 var logger = require('morgan'),
+		xhub = require('express-x-hub'),
     bodyParser = require('body-parser'),
     config = require('../config'),
     routes = require('./routes/index'),
@@ -43,7 +44,10 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/assets/material-design-lite', express.static('node_modules/material-design-lite'));
-//app.use(express.cookieParser());
+
+if(config.webhookSecret) {
+	app.use(xhub({ algorithm: 'sha1', secret: config.webhookSecret}));
+}
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use(session({
