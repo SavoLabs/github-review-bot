@@ -36,9 +36,9 @@ var githubApi = require('./github-api'),
 	}
 
 	function isXHubValid(req, callback) {
-		if(!req.isXHub) {
+		if(!req.isXHub || config.webhookSecret == '' || config.webhookSecret == null) {
 			callback(true);
-			return
+			return;
 		}
 
 		callback(req.isXHubValid());
