@@ -28,22 +28,37 @@ var express = require('express'),
     // ensure we only handle events we know how to handle
     if( config.pullRequestEvents.indexOf(eventName) < 0 ) {
       console.log('POST Request received, but this is not the event I am looking for.');
-      return debug('POST Request received, but this is not the event I am looking for.');
+      debug('POST Request received, but this is not the event I am looking for.');
+      return _respond(res, "POST Request received, but this is not the event I am looking for.");
+    }
+
+    if (!req.body) {
+      console.log('POST Request received, but no body!');
+      debug('POST Request received, but no body!');
+      return _respond(res, 'POST Request received, but no body!');
     }
 
 		// assigned causes the bot to spam the instructions comment.
 		if(req.body.action && req.body.action === "assigned") {
 			console.log('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
-      return debug('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+      debug('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+      return _respond(res, 'POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
 		}
 
-    if (!req.body) {
-      console.log('POST Request received, but no body!');
-      return debug('POST Request received, but no body!');
+    // the same spam happens if the PR is labeled before it is hooked
+    if(req.body.action && req.body.action === "labeled" && req.body.pull_request && req.body.pull_request.user.login === req.body.sender.login ) {
+      // make sure the label change is not one of the bot labels.
+      if( req.body.label && ( req.body.label.name !== config.labelNeedsReview && req.body.label.name !== config.labelPeerReviewed ) ) {
+        console.log('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+        debug('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+        return _respond(res, 'POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+      }
     }
+
     if (!req.body.repository) {
       console.log('POST Request received, but no repo found.');
-      return debug('POST Request received, but no repo found.');
+      debug('POST Request received, but no repo found.');
+      return _respond(res, 'POST Request received, but no repo found.');
     }
 
 
@@ -53,8 +68,9 @@ var express = require('express'),
 
       if ( req.body.pull_request.state && config.pullRequestsStatus.indexOf(req.body.pull_request.state) < 0 ) {
         console.log("POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
-        return debug("POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
-      }
+        debug("POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
+        return _respond(res, "POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
+    }
 
       bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, processPullRequest);
       return _respond(res, 'Processing PR ' + req.body.pull_request.number);
@@ -65,12 +81,14 @@ var express = require('express'),
         githubApi.pullrequests.get(req.body.issue.number, repo, function (pullRequests) {
             if (!pullRequests || pullRequests.length < 0) {
               console.log('Error: Tried to process single pull request, but failed');
-              return debug('Error: Tried to process single pull request, but failed');
+              debug('Error: Tried to process single pull request, but failed');
+              return _respond(res, 'Error: Tried to process single pull request, but failed');
             }
             var pr0 = pullRequests[0];
             if ( pr0.state && config.pullRequestsStatus.indexOf(pr0.state) < 0 ) {
               console.log("POST Request received, but the PR is in a state that I do not care about (" + pr0.state + ").");
-              return debug("POST Request received, but the PR is in a state that I do not care about (" + pr0.state + ").");
+              debug("POST Request received, but the PR is in a state that I do not care about (" + pr0.state + ").");
+              return _respond(res, "POST Request received, but the PR is in a state that I do not care about (" + pr0.state + ").");
             }
             bot.checkForLabel(pr0.number, repo, pr0, processPullRequest);
         });

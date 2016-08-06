@@ -51,7 +51,7 @@ values are then loaded into the environment when the bot initializes.
 
 #### Azure
 
-You should set Application Settings for the following:
+You need to set Application Settings for the following:
 
 - `GRB_ACCESS_TOKEN` : A personal access token that is used to authenticate the user
 - `GRB_BOT_URL` : The base url for the callbacks to the bot
@@ -61,9 +61,27 @@ You should set Application Settings for the following:
 - `WEBSITE_NODE_DEFAULT_VERSION` : The version of NodeJS to use. Tested with `v5.9.1`
 
 
+#### Heroku
+
+You need to set Application Settings for the following:
+
+- `GRB_ACCESS_TOKEN` : A personal access token that is used to authenticate the user
+- `GRB_BOT_URL` : The base url for the callbacks to the bot
+- `GRB_WEBHOOK_SECRET` : A secret token that is provided to Github for verification
+- `GRB_AUTH_CLIENT_ID` : Github oAuth2 client id
+- `GRB_AUTH_CLIENT_SECRET`: Github oAuth2 client secret
+
+The application should also be set as with the `heroku/nodejs` build pack. There is an `app.json`
+that defines all the information for a Heroku deployment.
+
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+
 ## Endpoints
 
 - `/` : Default information page
 - `/repos` : configure the repositories that should be monitored
 - `/repos/:repo` : configure the specified repo that should be monitored
+- `/audit` : a page that shows all users in the organization that do not have 2-factor enabled
+- `/managed` : lists all the repositories that currently have webhooks defined for the peer review bot
+- `/nonmanaged` : lists all the repositories that currently do not have webhooks defined for the peer review bot
 - `/pullrequest` : endpoint for the webhook to notify of the pull request
