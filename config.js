@@ -27,6 +27,12 @@ config.instructionsComment = '';
 // labels that if the bot sees it will not monitor the PR.
 config.excludeLabels = ['no-review'];
 
+config.enableReactions = false;
+// the reactions that will identify as "looks good"
+config.lgtmReactions = ["+1", "heart", "hooray"];
+// the reactions that will identify as "needs work"
+config.needsWorkReactions = ["-1", "confused"];
+
 config.filenameFilter = '';
 // comment when the PR creator tries to approve their own PR.
 config.shameComment = ":bell: Shame! :bell: Shame!\nYou cannot vote to approve your own PR. 'A' for effort though.";

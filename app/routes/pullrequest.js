@@ -70,7 +70,7 @@ var express = require('express'),
         console.log("POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
         debug("POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
         return _respond(res, "POST Request received, but the PR is in a state that I do not care about (" + req.body.pull_request.state + ").");
-    }
+    	}
 
       bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, processPullRequest);
       return _respond(res, 'Processing PR ' + req.body.pull_request.number);
