@@ -10,7 +10,8 @@ var logger = require('morgan'),
     bodyParser = require('body-parser'),
     config = require('../config'),
     routes = require('./routes/index'),
-    pullrequest = require('./routes/pullrequest'),
+		pullrequest = require('./routes/pullrequest'),
+		repository = require('./routes/repository'),
 		comment = require('./routes/comment'),
     repos = require('./routes/repos'),
     audit = require('./routes/audit'),
@@ -61,6 +62,7 @@ if(config.authClientID && config.authClientSecret) {
 }
 app.use('/', routes);
 app.use('/pullrequest', pullrequest);
+app.use('/repository', repository);
 app.use('/comment', comment);
 app.use('/managed', managed);
 app.use('/nonmanaged', nonmanaged);

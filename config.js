@@ -34,7 +34,8 @@ config.lgtmReactions = ["+1", "heart", "hooray"];
 config.needsWorkReactions = ["-1", "confused"];
 
 config.enableRepositoryHook = true;
-config.repositoryHookEvents = ['created'];
+config.repositoryHookEvents = ['repository'];
+config.repositoryHookActions = ['created'];
 
 config.filenameFilter = '';
 // comment when the PR creator tries to approve their own PR.

@@ -40,7 +40,7 @@ var githubApi = require('./github-api'),
 			callback(true);
 			return;
 		}
-
+		console.log("xhub validated: " + req.isXHubValid());
 		callback(req.isXHubValid());
 	}
 

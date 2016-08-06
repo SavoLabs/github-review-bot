@@ -17,7 +17,7 @@ function _processRepositoryEvent (req, res) {
 			debug('XHub signature did not match expected.');
 			return _respond(res, 'XHub signature did not match expected.');
 		}
-		
+
 		if(!config.enableRepositoryHook) {
 			console.log('Repository hook not enabled: stopping.');
 			debug('Repository hook not enabled: stopping.');
@@ -27,9 +27,16 @@ function _processRepositoryEvent (req, res) {
 		var eventName = req.get('X-GitHub-Event');
 		// ensure we only handle events we know how to handle
 		if( config.repositoryHookEvents.indexOf(eventName) < 0 ) {
-			console.log('POST Request received, but this is not the event I am looking for.');
-			debug('POST Request received, but this is not the event I am looking for.');
-			return _respond(res, 'POST Request received, but this is not the event I am looking for.');
+			console.log('POST Request received, but "' + eventName + '" is not an event I look for.');
+			debug('POST Request received, but "' + eventName + '" is not an event I look for.');
+			return _respond(res, 'POST Request received, but "' + eventName + '" is not an event I look for.');
+		}
+
+		// ensure we only handle events we know how to handle
+		if( req.body.action && config.repositoryHookActions.indexOf(req.body.action) < 0 ) {
+			console.log('POST Request received, but "' + req.body.action + '" is not an action I look for.');
+			debug('POST Request received, but "' + req.body.action + '" is not an action I look for.');
+			return _respond(res, 'POST Request received, but "' + req.body.action + '" is not an action I look for.');
 		}
 
 		if(!req.body.repository) {
