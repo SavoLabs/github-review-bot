@@ -30,9 +30,8 @@ function unenforce(repo, callback) {
 
 function _setStatus ( repo, pr, approved, remaining, callback ) {
 	var status = approved ? "success" : "pending";
-	var desc = approved ? "The number of reviews needed was successfull." : "Waiting for " + remaining + " code reviews...";
-	console.log("setting status as : " + status);
-	console.log(desc);
+	var reviewsPluralized = remaining == 1 ? "review" : "reviews";
+	var desc = approved ? "The number of reviews needed was successfull." : "Waiting for " + remaining + " code " + reviewsPluralized + "...";
 	githubApi.webhooks.createStatus(repo, status, pr.head.sha, desc, function(err, reply) {
 		if(callback) {
 			callback(err,reply);
