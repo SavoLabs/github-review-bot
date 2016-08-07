@@ -13,6 +13,9 @@ the appropriate number of reviews. It will automatically label, and merge the PR
 If anyone replies with 'needs work', or ':-1:' it will not 'move ahead' with
 the merge until that person follows up with 'LGTM' or ':+1:'.
 
+Pushing a new commit to a pull request will reset any votes, as committing code
+after a review needs to be reviewed again.
+
 Once you create a Pull Request, in a repository that _Peer Review Bot_ is monitoring,
 it will comment on the Pull Request on how things work.
 
@@ -60,6 +63,7 @@ You need to set Application Settings for the following:
 - `GRB_AUTH_CLIENT_SECRET`: Github oAuth2 client secret
 - `WEBSITE_NODE_DEFAULT_VERSION` : The version of NodeJS to use. Tested with `v5.9.1`
 
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
 #### Heroku
 

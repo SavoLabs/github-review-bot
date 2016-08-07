@@ -28,10 +28,22 @@ function unenforce(repo, callback) {
 	});
 }
 
-function _setStatus ( repo, pr, approved, remaining, callback ) {
-	var status = approved ? "success" : "pending";
+function _setStatus ( repo, pr, state, remaining, callback ) {
 	var reviewsPluralized = remaining == 1 ? "review" : "reviews";
-	var desc = approved ? "The number of reviews needed was successfull." : "Waiting for " + remaining + " code " + reviewsPluralized + "...";
+	var status, desc;
+	switch(state){
+		case githubApi.webhooks.statusStates.success:
+			status = "success";
+			desc = "The number of reviews needed was successfull.";
+			break;
+		case githubApi.webhooks.statusStates.failure:
+			status = "failure";
+			desc = "More work needs to be done on this pull request";
+			break;
+		default:
+			status = "pending";
+			desc = "Waiting for " + remaining + " code " + reviewsPluralized + "...";
+	}
 	githubApi.webhooks.createStatus(repo, status, pr.head.sha, desc, function(err, reply) {
 		if(callback) {
 			callback(err,reply);
@@ -42,6 +54,7 @@ function _setStatus ( repo, pr, approved, remaining, callback ) {
 /**
  * Checks if the files changed in a PR are the ones we're scanning for
  * @param {int} prNumber - Number of PR
+ * @param {string} repo - The repository name
  * @callback {checkForFilesCb} callback
  */
 function checkForFiles(prNumber, repo, callback) {
@@ -83,27 +96,21 @@ function checkForFiles(prNumber, repo, callback) {
 	});
 }
 
-function checkForLabel (prNumber, repo, pr, callback) {
-	githubApi.auth.authenticate();
+function checkForLabel (prNumber, repo, pr, action, callback) {
 	/**
 	 * @callback checkForLabelCb
 	 * @param {Object} result - Object describing how the issue is labeled
 	 */
-	if (!prNumber) {
+	if (!prNumber || !repo || !pr) {
 		console.log('checkForLabel: insufficient parameters');
 		return debug('checkForLabel: insufficient parameters');
 	}
-	console.log("repo: " + repo)
-	github.issues.getIssueLabels({
-		user: config.organization,
-		repo: repo,
-		number: prNumber
-	}, function(error, result) {
+	githubApi.issues.getLabels(repo, prNumber, function(error, labels) {
 		var excludeLabels = config.excludeLabels,
 			labeledNeedsReview = false,
 			labeledReviewed = false,
 			labeledExclude = false,
-			labels = [];
+			outLabels = [];
 
 		if (error) {
 			console.log('checkForLabel: Error while fetching labels for single PR: ');
@@ -112,16 +119,21 @@ function checkForLabel (prNumber, repo, pr, callback) {
 		}
 
 		// Check if already labeled
-		for (var i = 0; i < result.length; i++) {
-			labeledNeedsReview = (result[i].name === config.labelNeedsReview) ? true : labeledNeedsReview;
-			labeledReviewed = (result[i].name === config.labelPeerReviewed) ? true : labeledReviewed;
+		for (var i = 0; i < labels.length; i++) {
+			labeledNeedsReview = (labels[i].name === config.labelNeedsReview) ? true : labeledNeedsReview;
+			labeledReviewed = (labels[i].name === config.labelPeerReviewed) ? true : labeledReviewed;
 
 			if (excludeLabels && excludeLabels.length && excludeLabels.length > 0) {
-				labeledExclude = (excludeLabels.indexOf(result[i].name) > -1) ? true : labeledExclude;
+				labeledExclude = (excludeLabels.indexOf(labels[i].name) > -1) ? true : labeledExclude;
 			}
 
-			labels.push(result[i]);
-			console.log(labels);
+			// we need to remove the peer-reviewed label because there was a new push
+			if(action === 'synchronized' && labels[i].name === config.labelPeerReviewed) {
+				console.log("new push, so need to remove the peer-reviewed label");
+				labeledReviewed = false;
+			} else {
+				outLabels.push(labels[i]);
+			}
 		}
 
 		if (callback) {
@@ -129,8 +141,8 @@ function checkForLabel (prNumber, repo, pr, callback) {
 				labeledNeedsReview: labeledNeedsReview,
 				labeledReviewed: labeledReviewed,
 				labeledExclude: labeledExclude,
-				labels: labels
-			}, pr);
+				labels: outLabels
+			}, pr, action);
 		}
 	});
 }
@@ -139,27 +151,17 @@ function checkForLabel (prNumber, repo, pr, callback) {
 /**
  * Check if a PR already has the instructions comment
  * @param {int} prNumber - Number of PR to check
+ * @param {string} repo - The repository name
  * @callback {checkForInstructionsCommentCb} callback
  */
 function _checkForInstructionsComment(prNumber, repo, callback) {
-	githubApi.auth.authenticate();
-	/**
-	 * @callback checkForInstructionsCommentCb
-	 * @param {boolean} posted - Comment posted or not?
-	 */
-	github.issues.getComments({
-		user: config.organization,
-		repo: repo,
-		number: prNumber
-	}, function(error, result) {
+	githubApi.issues.getComments(repo, prNumber, function(err, comments) {
 		var instructed = false;
-
-		if (error) {
-			return debug('commentInstructions: error while trying fetch comments: ', error);
+		if (err) {
+			return debug('commentInstructions: error while trying fetch comments: ', err);
 		}
-
-		for (var i = 0; i < result.length; i++) {
-			instructed = (result[i].body.slice(1, 30).trim() === config.instructionsComment.slice(1, 30).trim());
+		for (var i = 0; i < comments.length; i++) {
+			instructed = (comments[i].body.slice(1, 30).trim() === config.instructionsComment.slice(1, 30).trim());
 			if (instructed) {
 				break;
 			}
@@ -170,167 +172,168 @@ function _checkForInstructionsComment(prNumber, repo, callback) {
 		}
 	});
 }
-
-
 /**
  * Check a PR for 'LGTM!' comments
  * @param {int} prNumber - Number of PR to check
+ * @param {string} repo - The repository name
+ * @param {object} pr - The Pull Request object
  * @callback {checkForApprovalComments} callback
  */
 function checkForApprovalComments(prNumber, repo, pr, callback) {
-	githubApi.auth.authenticate();
-	/**
-	 * @callback checkForApprovalCommentsCb
-	 * @param {boolean} approved - Approved or not?
-	 */
-	if (!prNumber) {
+
+	if (!prNumber || !repo || !pr) {
 		console.log('checkForApprovalComments: insufficient parameters');
 		return debug('checkForApprovalComments: insufficient parameters');
 	}
 
 	var createdBy = pr.user.login;
-	github.issues.getComments({
-		repo: repo,
-		user: config.organization,
-		number: prNumber,
-		perPage: 99
-	}, function(error, result) {
-		var lgtm = config.lgtmRegex,
-			approvedCount = 0, approved,
-			ngtm = config.needsWorkRegex;
 
-		if (error) {
-			console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
-			console.log(error);
-			return debug('checkForApprovalComments: Error while fetching coments for single PR: ', error);
+	// we get the commits for the PR, so we can get the date of the most recent commit.
+	// any votes before this date, will be ignored.
+	githubApi.pullrequests.getMostRecentCommit(repo, prNumber, function(err, lastCommit ) {
+		if(err || !lastCommit) {
+			console.log('Unable to get the most recent commit.');
+			return debug('Unable to get the most recent commit.');
 		}
+		var date = Date.parse(lastCommit.commit.author.date);
 
-    var voteUsers = [];
-		var whoWantMore = [];
-		var shamed = false;
-		var needsShame = false;
-		console.log("fire");
-		for (var i = 0; i < result.length; ++i) {
-			var comment = result[i];
-			console.log("processing index: " + i);
-      var who = comment.user.login;
-			if (comment.body) {
-				console.log("processing comment: " + comment.id + " : " + comment.user.login + " : " + comment.body);
-        var rbody = comment.body.trim();
-				// skip all from bot
-				if(who.trim() === config.username.trim()) {
-					var isShameComment = (rbody.slice(0, 30).trim() === "@" + createdBy + " " + config.shameComment.slice(0, 30 - (createdBy.length + 2)).trim());
-					if (isShameComment) {
-						// remember if we have shamed.
-						shamed = true;
-					}
-					continue;
-				}
+		githubApi.issues.getCommentsSince(repo, prNumber, date, function(err, comments) {
+			console.log(comments);
+			var lgtm = config.lgtmRegex,
+			 		approvedCount = 0, approved,
+			 		ngtm = config.needsWorkRegex;
+			if (err) {
+				console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
+				console.log(err);
+				return debug('checkForApprovalComments: Error while fetching coments for single PR: ', err);
+			}
 
-				// test if it looks good
-				if (lgtm.test(rbody)) {
-					console.log("looks good match");
-					if(who === createdBy) {
-						// you can't vote on your own PR
-						needsShame = true;
-						console.log("lgtm shame: continue");
+			var voteUsers = [], whoWantMore = [],
+		 			shamed = false, needsShame = false;
+			for (var i = 0; i < comments.length; ++i) {
+				var comment = comments[i];
+				console.log("processing index: " + i);
+	      var who = comment.user.login;
+				if (comment.body) {
+					console.log("processing comment: " + comment.id + " : " + comment.user.login + " : " + comment.body);
+	        var rbody = comment.body.trim();
+					// skip all from bot
+					if(who.trim() === config.username.trim()) {
+						var isShameComment = (rbody.slice(0, 30).trim() === "@" + createdBy + " " + config.shameComment.slice(0, 30 - (createdBy.length + 2)).trim());
+						if (isShameComment) {
+							// remember if we have shamed.
+							shamed = true;
+						}
 						continue;
 					}
+					// test if it looks good
+					if (lgtm.test(rbody)) {
+						console.log("looks good match");
+						if(who === createdBy) {
+							// you can't vote on your own PR
+							needsShame = true;
+							console.log("lgtm shame: continue");
+							continue;
+						}
 
-					if(voteUsers.indexOf(who) >= 0 ) {
-						// user already voted.
-						console.log("User: " + who + " already voted. Skipping");
-						console.log("voted: continue");
-						continue;
-					}
-					// remember this person already voted.
-					voteUsers[voteUsers.length] = who;
+						if(voteUsers.indexOf(who) >= 0 ) {
+							// user already voted.
+							console.log("User: " + who + " already voted. Skipping");
+							console.log("voted: continue");
+							continue;
+						}
+						// remember this person already voted.
+						voteUsers[voteUsers.length] = who;
 
-					var whoIndex = whoWantMore.indexOf(who);
-					if (whoIndex >= 0 ) {
-						// this user did vote no, now they say yes.
-						// so we can now remove them from the whoWantMore
-						whoWantMore.splice(whoIndex,1);
-					}
-				} else if (ngtm.test(rbody)) {
-					console.log("needs work match");
-					if(who === createdBy) {
-						console.log("shame exit");
-						// you can't vote on your own PR
-						needsShame = true;
-						continue;
-					}
-					var whoIndex = voteUsers.indexOf(who);
-					if (whoIndex >= 0 ) {
-						// this user did vote yes, now they say no.
-						// so we can now remove them from the voteUsers
-						voteUsers.splice(whoIndex,1);
-					}
+						var whoIndex = whoWantMore.indexOf(who);
+						if (whoIndex >= 0 ) {
+							// this user did vote no, now they say yes.
+							// so we can now remove them from the whoWantMore
+							whoWantMore.splice(whoIndex,1);
+						}
+					} else if (ngtm.test(rbody)) {
+						console.log("needs work match");
+						if(who === createdBy) {
+							console.log("shame exit");
+							// you can't vote on your own PR
+							needsShame = true;
+							continue;
+						}
+						var whoIndex = voteUsers.indexOf(who);
+						if (whoIndex >= 0 ) {
+							// this user did vote yes, now they say no.
+							// so we can now remove them from the voteUsers
+							voteUsers.splice(whoIndex,1);
+						}
 
-					if(whoWantMore.indexOf(who) < 0) {
-						whoWantMore[whoWantMore.length] = who;
+						if(whoWantMore.indexOf(who) < 0) {
+							whoWantMore[whoWantMore.length] = who;
+						}
 					}
 				}
 			}
-		}
+			if(!shamed && needsShame) {
+				githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
+			}
 
-		if(!shamed && needsShame) {
-			githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
-		}
+			// process the reactions on the PR
+			// currently, reactions do not trigger a webhook event
+			// so it does not trigger a processing of the PR
+			githubApi.reactions.getForPullRequest(repo, prNumber, function( xerr, res ) {
 
-		// process the reactions on the PR
-		// currently, reactions do not trigger a webhook event
-		// so it does not trigger a processing of the PR
-		githubApi.reactions.getForPullRequest(repo, prNumber, function( err, res ) {
-			for(var i = 0; i < res.length; ++i) {
-				var reaction = res[i];
-				var who = reaction.user.login;
-				if (who === createdBy ) {
-					continue;
-				}
-
-				if(config.lgtmReactions.indexOf(reaction.content) >= 0) {
-					// looks good
-					if ( voteUsers.indexOf(who) >= 0 ) {
-						// already voted
+				// TODO: filter these by the date too
+				for(var i = 0; i < res.length; ++i) {
+					var reaction = res[i];
+					var who = reaction.user.login;
+					if (who === createdBy ) {
 						continue;
 					}
-					// remember this person already voted.
-					voteUsers[voteUsers.length] = who;
-					var whoIndex = whoWantMore.indexOf(who);
-					if (whoIndex >= 0 ) {
-						// this user did vote no, now they say yes.
-						// so we can now remove them from the whoWantMore
-						whoWantMore.splice(whoIndex,1);
-					}
-				} else if (config.needsWorkReactions.indexOf(reaction.content) >= 0 ) {
-					// needs work
-					var whoIndex = voteUsers.indexOf(who);
-					if (whoIndex >= 0 ) {
-						voteUsers.splice(whoIndex,1);
-					}
+					if(config.lgtmReactions.indexOf(reaction.content) >= 0) {
+						// looks good
+						if ( voteUsers.indexOf(who) >= 0 ) {
+							// already voted
+							continue;
+						}
+						// remember this person already voted.
+						voteUsers[voteUsers.length] = who;
+						var whoIndex = whoWantMore.indexOf(who);
+						if (whoIndex >= 0 ) {
+							// this user did vote no, now they say yes.
+							// so we can now remove them from the whoWantMore
+							whoWantMore.splice(whoIndex,1);
+						}
+					} else if (config.needsWorkReactions.indexOf(reaction.content) >= 0 ) {
+						// needs work
+						var whoIndex = voteUsers.indexOf(who);
+						if (whoIndex >= 0 ) {
+							voteUsers.splice(whoIndex,1);
+						}
 
-					if(whoWantMore.indexOf(who) < 0) {
-						whoWantMore[whoWantMore.length] = who;
+						if(whoWantMore.indexOf(who) < 0) {
+							whoWantMore[whoWantMore.length] = who;
+						}
 					}
 				}
 
+				// after we check reactions
+				approvedCount = voteUsers.length;
+				console.log("people that want improvements: " + whoWantMore.length);
+				console.log("number of reviews needed for approval: " + config.reviewsNeeded);
+				console.log("number of people that say it's good: " + approvedCount);
 
-			}
+				approved = (approvedCount >= config.reviewsNeeded) && whoWantMore.length == 0;
+				// if there are people that want more work done, mark as failure
+				// otherwise, it is pending or success, depending on the number of reviews.
+				var statusState = whoWantMore.length == 0 ?
+					approved ? githubApi.webhooks.statusStates.success : githubApi.webhooks.statusStates.pending :
+					githubApi.webhooks.statusStates.failure;
+				_setStatus(repo, pr, statusState, config.reviewsNeeded - approvedCount, function(err,result) { });
 
-			// after we check reactions
-			approvedCount = voteUsers.length;
-			console.log("people that want improvements: " + whoWantMore.length);
-			console.log("number of reviews needed for approval: " + config.reviewsNeeded);
-			console.log("number of people that say it's good: " + approvedCount);
-
-			approved = (approvedCount >= config.reviewsNeeded) && whoWantMore.length == 0;
-			_setStatus(repo, pr, approved, config.reviewsNeeded - approvedCount, function(err,result) { });
-
-			if (callback) {
-				console.log("approved: "+ approved);
-				callback(approved);
-			}
+				if (callback) {
+					console.log("approved: "+ approved);
+					callback(approved);
+				}
+			});
 		});
 	});
 }
