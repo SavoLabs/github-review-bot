@@ -6,6 +6,7 @@ var githubApi = require('./services/github/github-api'),
 	comments = require('./services/github/comments'),
 	users = require('./services/github/users'),
 	reactions = require('./services/github/reactions'),
+	issues = require('./services/github/issues'),
 	debug = require('debug')('reviewbot:bot'),
 	config = require('../config');
 
@@ -16,6 +17,7 @@ module.exports = {
 	repos: repos,
 	pullrequests: pullrequests,
 	auth: auth,
+	issues: issues,
 	comments: comments,
 	reactions: reactions,
 	users: users
