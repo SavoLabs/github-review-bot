@@ -85,3 +85,4 @@ that defines all the information for a Heroku deployment.
 - `/managed` : lists all the repositories that currently have webhooks defined for the peer review bot
 - `/nonmanaged` : lists all the repositories that currently do not have webhooks defined for the peer review bot
 - `/pullrequest` : endpoint for the webhook to notify of the pull request
+- `/repository` : endpoint for org level webhook to notify when a repository is created
