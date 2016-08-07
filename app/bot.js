@@ -96,27 +96,21 @@ function checkForFiles(prNumber, repo, callback) {
 	});
 }
 
-function checkForLabel (prNumber, repo, pr, callback) {
-	githubApi.auth.authenticate();
+function checkForLabel (prNumber, repo, pr, action, callback) {
 	/**
 	 * @callback checkForLabelCb
 	 * @param {Object} result - Object describing how the issue is labeled
 	 */
-	if (!prNumber) {
+	if (!prNumber || !repo || !pr) {
 		console.log('checkForLabel: insufficient parameters');
 		return debug('checkForLabel: insufficient parameters');
 	}
-	console.log("repo: " + repo)
-	github.issues.getIssueLabels({
-		user: config.organization,
-		repo: repo,
-		number: prNumber
-	}, function(error, result) {
+	githubApi.issues.getLabels(repo, prNumber, function(error, labels) {
 		var excludeLabels = config.excludeLabels,
 			labeledNeedsReview = false,
 			labeledReviewed = false,
 			labeledExclude = false,
-			labels = [];
+			outLabels = [];
 
 		if (error) {
 			console.log('checkForLabel: Error while fetching labels for single PR: ');
@@ -125,15 +119,21 @@ function checkForLabel (prNumber, repo, pr, callback) {
 		}
 
 		// Check if already labeled
-		for (var i = 0; i < result.length; i++) {
-			labeledNeedsReview = (result[i].name === config.labelNeedsReview) ? true : labeledNeedsReview;
-			labeledReviewed = (result[i].name === config.labelPeerReviewed) ? true : labeledReviewed;
+		for (var i = 0; i < labels.length; i++) {
+			labeledNeedsReview = (labels[i].name === config.labelNeedsReview) ? true : labeledNeedsReview;
+			labeledReviewed = (labels[i].name === config.labelPeerReviewed) ? true : labeledReviewed;
 
 			if (excludeLabels && excludeLabels.length && excludeLabels.length > 0) {
-				labeledExclude = (excludeLabels.indexOf(result[i].name) > -1) ? true : labeledExclude;
+				labeledExclude = (excludeLabels.indexOf(labels[i].name) > -1) ? true : labeledExclude;
 			}
 
-			labels.push(result[i]);
+			// we need to remove the peer-reviewed label because there was a new push
+			if(action === 'synchronized' && labels[i].name === config.labelPeerReviewed) {
+				console.log("new push, so need to remove the peer-reviewed label");
+				labeledReviewed = false;
+			} else {
+				outLabels.push(labels[i]);
+			}
 		}
 
 		if (callback) {
@@ -141,8 +141,8 @@ function checkForLabel (prNumber, repo, pr, callback) {
 				labeledNeedsReview: labeledNeedsReview,
 				labeledReviewed: labeledReviewed,
 				labeledExclude: labeledExclude,
-				labels: labels
-			}, pr);
+				labels: outLabels
+			}, pr, action);
 		}
 	});
 }

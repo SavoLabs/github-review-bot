@@ -28,7 +28,7 @@ function getComments(repo, number, callback ) {
 		user: config.organization,
 		number: number,
 		per_page: 100
-	}, function(err, comments) {
+	}, function(err, res) {
 		_getComments(err, res, callback);
 	});
 }
@@ -44,7 +44,21 @@ function getCommentsSince(repo, number, date, callback) {
 	});
 }
 
+function getLabels(repo, number, callback) {
+	auth.authenticate();
+	github.issues.getIssueLabels({
+		user: config.organization,
+		repo: repo,
+		number: number
+	}, function(err,result) {
+		if(callback){
+			callback(err,result);
+		}
+	});
+}
+
 module.exports = {
 	getComments: getComments,
-	getCommentsSince: getCommentsSince
+	getCommentsSince: getCommentsSince,
+	getLabels: getLabels
 };
