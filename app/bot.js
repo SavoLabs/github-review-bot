@@ -12,7 +12,7 @@ function enforce(repo, reviewsNeeded, callback) {
 		resultReviewsNeeded = config.reviewsNeeded;
 	}
 	var cbUrl = config.botUrlRoot + "/pullrequest/" + resultReviewsNeeded.toString()
-	githubApi.webhooks.createWebHook(repo, cbUrl, callback);
+	githubApi.webhooks.createWebHook(repo, cbUrl, config.pullRequestEvents, callback);
 }
 
 function unenforce(repo, callback) {

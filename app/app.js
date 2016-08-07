@@ -6,10 +6,12 @@ var Strategy = require('passport-github').Strategy;
 var path = require('path');
 
 var logger = require('morgan'),
+		xhub = require('express-x-hub'),
     bodyParser = require('body-parser'),
     config = require('../config'),
     routes = require('./routes/index'),
-    pullrequest = require('./routes/pullrequest'),
+		pullrequest = require('./routes/pullrequest'),
+		repository = require('./routes/repository'),
 		comment = require('./routes/comment'),
     repos = require('./routes/repos'),
     audit = require('./routes/audit'),
@@ -43,7 +45,10 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/assets/material-design-lite', express.static('node_modules/material-design-lite'));
-//app.use(express.cookieParser());
+
+if(config.webhookSecret) {
+	app.use(xhub({ algorithm: 'sha1', secret: config.webhookSecret}));
+}
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use(session({
@@ -57,6 +62,7 @@ if(config.authClientID && config.authClientSecret) {
 }
 app.use('/', routes);
 app.use('/pullrequest', pullrequest);
+app.use('/repository', repository);
 app.use('/comment', comment);
 app.use('/managed', managed);
 app.use('/nonmanaged', nonmanaged);
