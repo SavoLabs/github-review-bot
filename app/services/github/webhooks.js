@@ -97,10 +97,17 @@ function createStatus (repo, status, sha, description, callback) {
 	});
 }
 
+var statusStates = {
+	pending: 0,
+	success: 1,
+	failure: -1
+};
+
 module.exports = {
 	getAll: getAll,
 	createWebHook: createWebHook,
 	deleteWebHook: deleteWebHook,
 	getWebHookId: getWebHookId,
-	createStatus: createStatus
+	createStatus: createStatus,
+	statusStates: statusStates
 };
