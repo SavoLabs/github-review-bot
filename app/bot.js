@@ -325,6 +325,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 
 				if (callback) {
 					console.log("approved: "+ approved);
+					console.log("needsWork: "+ needsWork);
 					callback(approved, needsWork);
 				}
 			});
@@ -349,7 +350,7 @@ function updateLabels(prNumber, repo, approved, needsWork, labels, callback) {
 
 	labels = (!labels || !labels.length) ? [] : labels;
 
-	if ((approved !== true && approved !== false) || !prNumber) {
+	if ((approved !== true && approved !== false) || !prNumber || (needsWork !== true && needsWork !== false) || !repo) {
 		console.log('labelPullRequest: insufficient parameters');
 		return debug('labelPullRequest: insufficient parameters');
 	}
