@@ -57,8 +57,27 @@ function getLabels(repo, number, callback) {
 	});
 }
 
+function edit(repo, number, data, callback) {
+	auth.authenticate();
+	github.issues.edit({
+		user: config.organization,
+		repo: repo,
+		number: number,
+		labels: data.labels ? JSON.stringify(data.labels) : undefined,
+		title: data.title ? data.title : undefined,
+		body: data.body ? data.body : undefined,
+		assignee: data.assignee ? data.assignee : undefined,
+		assignees: data.assignees ? data.assignees : undefined,
+	}, function(error, result) {
+		if (callback) {
+			callback(error, result);
+		}
+	});
+}
+
 module.exports = {
 	getComments: getComments,
 	getCommentsSince: getCommentsSince,
-	getLabels: getLabels
+	getLabels: getLabels,
+	edit: edit
 };

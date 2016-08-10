@@ -5,7 +5,7 @@ var express = require('express'),
     bot = require('../bot'),
     githubApi = require('../github'),
     config = require('../../config'),
-    debug = require('debug')('reviewbot:pullrequest'),
+    debug = require('debug')('reviewbot:repository'),
     router = express.Router();
 
 router.post('/', _processRepositoryEvent );

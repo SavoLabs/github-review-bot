@@ -144,7 +144,7 @@ function processPullRequest(labelResult, pr, action) {
         }
         console.log('checkForApprovalComments:::')
         // Let's get all our comments and check them for approval
-        bot.checkForApprovalComments(pr.number, pr.head.repo.name, pr, function (approved) {
+        bot.checkForApprovalComments(pr.number, pr.head.repo.name, pr, function (approved, needsWork) {
             var labels, output = [];
 
             // Check for instructions comment and post if not present
@@ -162,7 +162,7 @@ function processPullRequest(labelResult, pr, action) {
 
             // Update the labels
             output.push('Updating labels for PR ' + pr.number);
-            bot.updateLabels(pr.number, pr.head.repo.name, approved, labels);
+            bot.updateLabels(pr.number, pr.head.repo.name, approved, needsWork, labels);
 
             // If we're supposed to merge, merge
             if (approved && config.mergeOnReview) {
