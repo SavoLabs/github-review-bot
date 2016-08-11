@@ -126,11 +126,6 @@ function _respond(res, message) {
  * @param {Object} pr - PR currently handled
  */
 function processPullRequest(labelResult, pr, action) {
-    // Check if PR is already labeled as 'reviewed', in which case we stop here
-    if (labelResult.labeledReviewed) {
-        return debug('PR ' + pr.number + ' already marked as "reviewed", stopping');
-    }
-
     // Check if we're supposed to skip this one
     if (labelResult.labeledExclude) {
         return debug('PR ' + pr.number + ' labeled to be exlcuded from the bot, stopping');
@@ -149,13 +144,6 @@ function processPullRequest(labelResult, pr, action) {
 
             // Check for instructions comment and post if not present
             bot.postInstructionsComment(pr.number, pr.head.repo.name);
-
-            // Stop if we already marked it as 'needs-review' and it does need more reviews
-            if (labelResult.labeledNeedsReview && !approved) {
-              console.log('PR ' + pr.number + ' already marked as "needs-review", stopping');
-              return debug('PR ' + pr.number + ' already marked as "needs-review", stopping');
-            }
-
             labels = labelResult.labels.map(function (label) {
                 return label.name;
             });

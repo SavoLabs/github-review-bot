@@ -121,8 +121,11 @@ function checkForLabel (prNumber, repo, pr, action, callback) {
 
 			// we need to remove the peer-reviewed label because there was a new push
 			if(action === 'synchronize' && labels[i].name === config.labelPeerReviewed) {
+				console.log("new push. needs review again.");
 				labeledReviewed = false;
 			} else {
+				console.log("action: " + action);
+				console.log("label: " + labels[i].name);
 				outLabels.push(labels[i]);
 			}
 		}
@@ -366,7 +369,7 @@ function updateLabels(prNumber, repo, approved, needsWork, labels, callback) {
 	}
 
 	// need to remove this one separate because it can exist with the needs-review label
-	if(approved && !needsWork && labels.indexOf(config.labelNeedsWork) > -1 ) {
+	if(!needsWork && labels.indexOf(config.labelNeedsWork) > -1 ) {
 		// has the needs-work label
 		labels.splice(labels.indexOf(config.labelNeedsWork), 1);
 		changed = true;
@@ -374,7 +377,7 @@ function updateLabels(prNumber, repo, approved, needsWork, labels, callback) {
 
 
 	if (!approved && labels.indexOf(config.labelPeerReviewed) > -1) {
-		labels.removeAt(labels.indexOf(config.labelPeerReviewed));
+		labels.splice(labels.indexOf(config.labelPeerReviewed), 1);
 		changed = true;
 	} else if (!approved && labels.indexOf(config.labelNeedsReview) === -1) {
 		labels.push(config.labelNeedsReview);
