@@ -69,21 +69,13 @@ function checkForFiles(prNumber, repo, callback) {
 		return callback(true);
 	}
 
-	githubApi.auth.authenticate();
-
-	github.pullRequests.getFiles({
-		user: config.organization,
-		repo: repo,
-		number: prNumber
-	}, function(error, result) {
-		var match = false,
-			i, ii;
-
-		if (error) {
-			return debug('commentInstructions: error while trying fetch comments: ', error);
+	githubApi.pullrequests.getFiles(repo, prNumber, function(err,files) {
+		var match = false, i, ii;
+		if (err) {
+			return debug('commentInstructions: error while trying fetch comments: ', err);
 		}
 
-		for (i = 0; i < result.length; i = i + 1) {
+		for (i = 0; i < files.length; i = i + 1) {
 			for (var ii = 0; ii < filenameFilter.length; ii = ii + 1) {
 				match = (result[i].filename.indexOf(filenameFilter[ii]) > -1) ? true : match;
 				if (match) {
@@ -91,8 +83,6 @@ function checkForFiles(prNumber, repo, callback) {
 				}
 			}
 		}
-
-		return callback(match);
 	});
 }
 
@@ -110,6 +100,7 @@ function checkForLabel (prNumber, repo, pr, action, callback) {
 			labeledNeedsReview = false,
 			labeledReviewed = false,
 			labeledExclude = false,
+			labeledNeedsWork = false,
 			outLabels = [];
 
 		if (error) {
@@ -122,16 +113,19 @@ function checkForLabel (prNumber, repo, pr, action, callback) {
 		for (var i = 0; i < labels.length; i++) {
 			labeledNeedsReview = (labels[i].name === config.labelNeedsReview) ? true : labeledNeedsReview;
 			labeledReviewed = (labels[i].name === config.labelPeerReviewed) ? true : labeledReviewed;
+			labeledNeedsWork = (labels[i].name === config.labelNeedsWork) ? true : labeledNeedsWork;
 
 			if (excludeLabels && excludeLabels.length && excludeLabels.length > 0) {
 				labeledExclude = (excludeLabels.indexOf(labels[i].name) > -1) ? true : labeledExclude;
 			}
 
 			// we need to remove the peer-reviewed label because there was a new push
-			if(action === 'synchronized' && labels[i].name === config.labelPeerReviewed) {
-				console.log("new push, so need to remove the peer-reviewed label");
+			if(action === 'synchronize' && labels[i].name === config.labelPeerReviewed) {
+				console.log("new push. needs review again.");
 				labeledReviewed = false;
 			} else {
+				console.log("action: " + action);
+				console.log("label: " + labels[i].name);
 				outLabels.push(labels[i]);
 			}
 		}
@@ -141,6 +135,7 @@ function checkForLabel (prNumber, repo, pr, action, callback) {
 				labeledNeedsReview: labeledNeedsReview,
 				labeledReviewed: labeledReviewed,
 				labeledExclude: labeledExclude,
+				labeledNeedsWork: labeledNeedsWork,
 				labels: outLabels
 			}, pr, action);
 		}
@@ -201,7 +196,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 			console.log(comments);
 			var lgtm = config.lgtmRegex,
 			 		approvedCount = 0, approved,
-			 		ngtm = config.needsWorkRegex;
+					needsWork, ngtm = config.needsWorkRegex;
 			if (err) {
 				console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
 				console.log(err);
@@ -322,16 +317,19 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				console.log("number of people that say it's good: " + approvedCount);
 
 				approved = (approvedCount >= config.reviewsNeeded) && whoWantMore.length == 0;
+				needsWork = whoWantMore.length > 0;
 				// if there are people that want more work done, mark as failure
 				// otherwise, it is pending or success, depending on the number of reviews.
 				var statusState = whoWantMore.length == 0 ?
 					approved ? githubApi.webhooks.statusStates.success : githubApi.webhooks.statusStates.pending :
 					githubApi.webhooks.statusStates.failure;
+
 				_setStatus(repo, pr, statusState, config.reviewsNeeded - approvedCount, function(err,result) { });
 
 				if (callback) {
 					console.log("approved: "+ approved);
-					callback(approved);
+					console.log("needsWork: "+ needsWork);
+					callback(approved, needsWork);
 				}
 			});
 		});
@@ -345,7 +343,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
  * @param {sring[]} labels - Previously fetched labels
  * @callback {updateLabelsCb} callback
  */
-function updateLabels(prNumber, repo, approved, labels, callback) {
+function updateLabels(prNumber, repo, approved, needsWork, labels, callback) {
 	/**
 	 * @callback updateLabelsCb
 	 * @param {Object} result - Result returned from GitHub
@@ -355,45 +353,58 @@ function updateLabels(prNumber, repo, approved, labels, callback) {
 
 	labels = (!labels || !labels.length) ? [] : labels;
 
-	if ((approved !== true && approved !== false) || !prNumber) {
+	if ((approved !== true && approved !== false) || !prNumber || (needsWork !== true && needsWork !== false) || !repo) {
 		console.log('labelPullRequest: insufficient parameters');
 		return debug('labelPullRequest: insufficient parameters');
 	}
 
+
 	// Adjust labels for approved / not approved
-	if (approved && labels.indexOf(config.labelNeedsReview) > -1) {
+	if (approved && !needsWork && labels.indexOf(config.labelNeedsReview) > -1) {
 		labels.splice(labels.indexOf(config.labelNeedsReview), 1);
 		changed = true;
-	} else if (approved && labels.indexOf(config.labelPeerReviewed) === -1) {
+	} else if (approved && !needsWork && labels.indexOf(config.labelPeerReviewed) === -1) {
 		labels.push(config.labelPeerReviewed);
 		changed = true;
 	}
 
+	// need to remove this one separate because it can exist with the needs-review label
+	if(!needsWork && labels.indexOf(config.labelNeedsWork) > -1 ) {
+		// has the needs-work label
+		labels.splice(labels.indexOf(config.labelNeedsWork), 1);
+		changed = true;
+	}
+
+
 	if (!approved && labels.indexOf(config.labelPeerReviewed) > -1) {
-		labels.removeAt(labels.indexOf(config.labelPeerReviewed));
+		labels.splice(labels.indexOf(config.labelPeerReviewed), 1);
 		changed = true;
 	} else if (!approved && labels.indexOf(config.labelNeedsReview) === -1) {
 		labels.push(config.labelNeedsReview);
 		changed = true;
 	}
 
+	if (needsWork && labels.indexOf(config.labelNeedsWork) == -1 ) {
+		// needs work, but doesn't already have the label
+		labels.push(config.labelNeedsWork);
+		changed = true;
+	}
+
 	if (changed) {
-		githubApi.auth.authenticate();
-		github.issues.edit({
-			user: config.organization,
-			repo: repo,
-			number: prNumber,
-			labels: JSON.stringify(labels)
-		}, function(error, result) {
-			if (error) {
+		githubApi.issues.edit(repo, prNumber, {labels: labels}, function(err, result) {
+			if (err) {
 				console.log('labelPullRequest: error while trying to label PR:');
-				console.log(error);
-				return debug('labelPullRequest: error while trying to label PR: ', error);
+				console.log(err);
+				debug('labelPullRequest: error while trying to label PR: ', err);
+				callback(null)
+				return;
 			}
+
 			if (callback) {
 				callback(result);
 			}
 		});
+
 	}
 }
 
