@@ -108,9 +108,23 @@ function getMostRecentCommit(repo, prNumber, callback) {
 	});
 }
 
+function getFiles(repo, number, callback) {
+	auth.authenticate();
+	github.pullRequests.getFiles({
+		user: config.organization,
+		repo: repo,
+		number: number
+	}, function(error, result) {
+		if(callback) {
+			callback(error, result);
+	 	}
+	});
+}
+
 module.exports = {
 	get: get,
 	getAll: getAll,
 	getMostRecentCommit: getMostRecentCommit,
-	getCommits: getCommits
+	getCommits: getCommits,
+	getFiles: getFiles
 };

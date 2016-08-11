@@ -126,11 +126,6 @@ function _respond(res, message) {
  * @param {Object} pr - PR currently handled
  */
 function processPullRequest(labelResult, pr, action) {
-    // Check if PR is already labeled as 'reviewed', in which case we stop here
-    if (labelResult.labeledReviewed) {
-        return debug('PR ' + pr.number + ' already marked as "reviewed", stopping');
-    }
-
     // Check if we're supposed to skip this one
     if (labelResult.labeledExclude) {
         return debug('PR ' + pr.number + ' labeled to be exlcuded from the bot, stopping');
@@ -144,25 +139,18 @@ function processPullRequest(labelResult, pr, action) {
         }
         console.log('checkForApprovalComments:::')
         // Let's get all our comments and check them for approval
-        bot.checkForApprovalComments(pr.number, pr.head.repo.name, pr, function (approved) {
+        bot.checkForApprovalComments(pr.number, pr.head.repo.name, pr, function (approved, needsWork) {
             var labels, output = [];
 
             // Check for instructions comment and post if not present
             bot.postInstructionsComment(pr.number, pr.head.repo.name);
-
-            // Stop if we already marked it as 'needs-review' and it does need more reviews
-            if (labelResult.labeledNeedsReview && !approved) {
-              console.log('PR ' + pr.number + ' already marked as "needs-review", stopping');
-              return debug('PR ' + pr.number + ' already marked as "needs-review", stopping');
-            }
-
             labels = labelResult.labels.map(function (label) {
                 return label.name;
             });
 
             // Update the labels
             output.push('Updating labels for PR ' + pr.number);
-            bot.updateLabels(pr.number, pr.head.repo.name, approved, labels);
+            bot.updateLabels(pr.number, pr.head.repo.name, approved, needsWork, labels);
 
             // If we're supposed to merge, merge
             if (approved && config.mergeOnReview) {

@@ -1,7 +1,7 @@
 var express = require('express'),
 		bot = require('../bot'),
 		github = require('../github'),
-		debug = require('debug')('reviewbot:comment'),
+		debug = require('debug')('reviewbot:repos'),
     router = express.Router(),
 		loginRoute = '/login';
 

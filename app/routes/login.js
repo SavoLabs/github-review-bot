@@ -1,7 +1,7 @@
 var express = require('express'),
 		bot = require('../bot'),
 		passport = require('passport'),
-		debug = require('debug')('reviewbot:comment'),
+		debug = require('debug')('reviewbot:login'),
 		config = require('../../config'),
 		router = express.Router();
 
