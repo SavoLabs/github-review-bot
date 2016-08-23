@@ -46,22 +46,43 @@ update the check status as `Passed`.
 These values should be set in an `.env` file that is located in the root of the project. These
 values are then loaded into the environment when the bot initializes.
 
+##### Required
+
+- `env[GRB_BOT_USERNAME]` : The github username for the bot
 - `env[GRB_ACCESS_TOKEN]` : A personal access token that is used to authenticate the user
+- `env[GRB_ORGANIZATION]` : The github organization name
 - `env[GRB_BOT_URL]` : The base url for the callbacks to the bot
 - `env[GRB_WEBHOOK_SECRET]` : A secret token that is provided to Github for verification
 - `env[GRB_AUTH_CLIENT_ID]` : Github oAuth2 client id
 - `env[GRB_AUTH_CLIENT_SECRET]` : Github oAuth2 client secret
 
+###### Optional
+
+- `env[GRB_NEEDS_REVIEW_LABEL]` : The label to be applied when a PR needs to be reviewed
+- `env[GRB_PEER_REVIEWED_LABEL]` : The label to be applied after a PR has been reviewed
+- `env[GRB_NEEDS_WORK_LABEL]` : The label to be applied when a PR is marked as needing more work
+
 #### Azure
 
 You need to set Application Settings for the following:
 
+##### Required
+
+- `GRB_BOT_USERNAME` : The github username for the bot
 - `GRB_ACCESS_TOKEN` : A personal access token that is used to authenticate the user
+- `GRB_ORGANIZATION` : The github organization name
 - `GRB_BOT_URL` : The base url for the callbacks to the bot
 - `GRB_WEBHOOK_SECRET` : A secret token that is provided to Github for verification
 - `GRB_AUTH_CLIENT_ID` : Github oAuth2 client id
 - `GRB_AUTH_CLIENT_SECRET`: Github oAuth2 client secret
-- `WEBSITE_NODE_DEFAULT_VERSION` : The version of NodeJS to use. Tested with `v5.9.1`
+
+###### Optional
+
+- `WEBSITE_NODE_DEFAULT_VERSION` : The version of NodeJS to use.
+- `GRB_NEEDS_REVIEW_LABEL` : The label to be applied when a PR needs to be reviewed
+- `GRB_PEER_REVIEWED_LABEL` : The label to be applied after a PR has been reviewed
+- `GRB_NEEDS_WORK_LABEL` : The label to be applied when a PR is marked as needing more work
+
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
@@ -69,11 +90,21 @@ You need to set Application Settings for the following:
 
 You need to set Application Settings for the following:
 
+##### Required
+
+- `GRB_BOT_USERNAME` : The github username for the bot
 - `GRB_ACCESS_TOKEN` : A personal access token that is used to authenticate the user
+- `GRB_ORGANIZATION` : The github organization name
 - `GRB_BOT_URL` : The base url for the callbacks to the bot
 - `GRB_WEBHOOK_SECRET` : A secret token that is provided to Github for verification
 - `GRB_AUTH_CLIENT_ID` : Github oAuth2 client id
 - `GRB_AUTH_CLIENT_SECRET`: Github oAuth2 client secret
+
+###### Optional
+
+- `GRB_NEEDS_REVIEW_LABEL` : The label to be applied when a PR needs to be reviewed
+- `GRB_PEER_REVIEWED_LABEL` : The label to be applied after a PR has been reviewed
+- `GRB_NEEDS_WORK_LABEL` : The label to be applied when a PR is marked as needing more work
 
 The application should also be set as with the `heroku/nodejs` build pack. There is an `app.json`
 that defines all the information for a Heroku deployment.
