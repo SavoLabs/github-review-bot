@@ -3,7 +3,7 @@ var express = require('express'),
 		github = require('../github'),
 		debug = require('debug')('reviewbot:nonmanaged'),
     router = express.Router(),
-		config = require('../../config');
+		config = require('../../config'),
 		loginRoute = '/login';
 
 var requireLoggedIn = function () {
