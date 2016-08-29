@@ -116,6 +116,7 @@ that defines all the information for a Heroku deployment.
 - `/` : Default information page
 - `/repos` : configure the repositories that should be monitored
 - `/repos/:repo` : configure the specified repo that should be monitored
+- `/repos/setup` : adds the bot to all repos in the org
 - `/audit` : a page that shows all users in the organization that do not have 2-factor enabled
 - `/managed` : lists all the repositories that currently have webhooks defined for the peer review bot
 - `/nonmanaged` : lists all the repositories that currently do not have webhooks defined for the peer review bot

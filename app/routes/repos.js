@@ -60,4 +60,33 @@ router.get('/unenforce/:repo', requireLoggedIn(), function(req, res) {
 		});
 });
 
+router.get('/setup', function(req, res) {
+	github.auth.isUserInOrganization(req.user, function(allowed) {
+		if(allowed) {
+			github.repos.getAll(function(result) {
+				var count = 0;
+				for( var i = 0; i < result.length; ++i ) {
+					var repo = result[i];
+					console.log("enforcing: " + repo.name)
+					bot.enforce(repo.name, config.reviewsNeeded, function(err, data) {
+						if(err) {
+							console.error(err);
+						}
+						count++;
+						if(count >= result.length) {
+							res.redirect('/repos/');
+						}
+					});
+				}
+			});
+		} else {
+			var err = new Error('Not Authorized.');
+			err.status = 403;
+			return err;
+		}
+	});
+	// get all repos
+	// make sure the bot in setup on all
+});
+
 module.exports = router;
