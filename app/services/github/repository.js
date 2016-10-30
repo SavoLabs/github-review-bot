@@ -34,7 +34,11 @@ function getAll ( callback ) {
 	_knownRepos = [];
 	auth.authenticate();
 
-	var req = github.repos.getAll({per_page: 100, visibility: 'all'}, function(err,res) {
+	var req = github.repos.getForOrg({
+		org: config.organization,
+		per_page: 100,
+		visibility: 'all'
+	}, function(err,res) {
 		_getRepos(err,res, callback);
 	});
 }

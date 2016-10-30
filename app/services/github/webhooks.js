@@ -32,7 +32,7 @@ function getAll(repo, callback) {
 	})
 }
 
-function createWebHook (repo, url, callback) {
+function createWebHook (repo, url, events, callback) {
 	auth.authenticate();
 	github.repos.createHook({
 		user: config.organization,
@@ -43,7 +43,7 @@ function createWebHook (repo, url, callback) {
 			url: url,
 			secret: config.webhookSecret
 		},
-		events: config.pullRequestEvents
+		events: events
 	}, function (err, result) {
 	  if(callback) {
 			callback(err,result);
@@ -97,10 +97,17 @@ function createStatus (repo, status, sha, description, callback) {
 	});
 }
 
+var statusStates = {
+	pending: 0,
+	success: 1,
+	failure: -1
+};
+
 module.exports = {
 	getAll: getAll,
 	createWebHook: createWebHook,
 	deleteWebHook: deleteWebHook,
 	getWebHookId: getWebHookId,
-	createStatus: createStatus
+	createStatus: createStatus,
+	statusStates: statusStates
 };
