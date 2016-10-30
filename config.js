@@ -1,8 +1,8 @@
+var merge = require('merge');
+var config = merge(require('./app/rules/config'));
 
-var config = {};
-
-config.organization = 'SavoLabs';
-config.username = 'savo-ci';
+config.organization = process.env.GRB_ORGANIZATION;
+config.username = process.env.GRB_USERNAME;
 // include a `.env` file in the root
 // loaded in /bin/www
 // or have them loaded into the environment
@@ -16,6 +16,17 @@ config.authClientSecret = process.env.GRB_AUTH_CLIENT_SECRET;
 config.accessToken = process.env.GRB_ACCESS_TOKEN;
 // the webhook secret used to generate the x-hub sha
 config.webhookSecret = process.env.GRB_WEBHOOK_SECRET;
+
+config.github = {
+	// the github organization
+	organization: process.env.GRB_GH_ORGANIZATION || 'savolabs',
+	// the username for the bot
+	username: process.env.GRB_GH_BOT_USERNAME || 'savo-ci',
+	// the github user access token
+	token: process.env.GRB_GH_ACCESS_TOKEN,
+	// the webhook secret used to generate the x-hub sha
+	webhookSecret: process.env.GRB_GH_WEBHOOK_SECRET
+};
 
 // the label that indicates the PR needs review
 config.labelNeedsReview = 'needs-peer-review';
@@ -61,7 +72,19 @@ config.pullRequestEvents = ['pull_request', 'issue_comment', 'pull_request_revie
 config.botUrlRoot = process.env.GRB_BOT_URL;
 
 if ( config.botUrlRoot == null ) {
-	throw new Error("Configuration: Missing configuration value for botUrlRoot");
+	throw new Error("Configuration: Missing configuration value for 'botUrlRoot'");
+}
+
+if ( config.organization == null ) {
+	throw new Error("Configuration: Missing configuration value for 'organization'");
+}
+
+if ( config.username == null ) {
+	throw new Error("Configuration: Missing configuration value for 'username'");
+}
+
+if ( config.github.token == null ) {
+	throw new Error("Configuration: Missing configuration value for github.token");
 }
 
 // Setup Instructions Comment
