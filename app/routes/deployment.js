@@ -1,3 +1,4 @@
+'use strict';
 var express = require('express'),
     bot = require('../bot'),
     githubApi = require('../github'),
@@ -16,7 +17,7 @@ function _handleDeploymentEvent (req, res) {
 	var ref = req.params.ref;
 	var deployment = req.body.deployment;
 
-	
+
 }
 
 module.exports = router;
