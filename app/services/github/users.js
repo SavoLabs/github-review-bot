@@ -24,7 +24,7 @@ function getAll(filter, callback) {
 	_knownUsers = [];
 
 	github.orgs.getMembers({
-		org: config.organization,
+		org: config.github.organization,
 		filter: filter ? filter : 'all',
 		per_page: 100
 	}, function(err,res) {

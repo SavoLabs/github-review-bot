@@ -7,7 +7,7 @@ var githubApi = require('./github-api'),
 function get( repo, callback ) {
 	auth.authenticate();
 	github.repos.get({
-		owner: config.organization,
+		owner: config.github.organization,
 		repo: repo
 	}, function(err, res) {
 		callback(res);
@@ -35,7 +35,7 @@ function getAll ( callback ) {
 	auth.authenticate();
 
 	var req = github.repos.getForOrg({
-		org: config.organization,
+		org: config.github.organization,
 		per_page: 100,
 		visibility: 'all'
 	}, function(err,res) {

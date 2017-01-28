@@ -10,10 +10,13 @@ function getForPullRequest(repo, prNumber, callback) {
 		return;
 	}
 	github.reactions.getForIssue({
-		owner: config.organization,
+		owner: config.github.organization,
 		repo: repo,
 		number: prNumber
 	}, function(err,res) {
+		if(err) {
+			console.error(err);
+		}
 		if(callback) {
 			callback(err,res);
 		}

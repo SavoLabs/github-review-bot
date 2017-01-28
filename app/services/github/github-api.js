@@ -10,7 +10,7 @@ var github = new GitHubApi({
   timeout: 8000,
 	version: '3.0.0',
 	headers: {
-		"Accept": "application/vnd.github.squirrel-girl-preview; */*"
+		"Accept": "application/vnd.github.black-cat-preview+json; application/vnd.github.squirrel-girl-preview; */*"
 	}
 });
 

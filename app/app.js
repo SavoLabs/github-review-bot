@@ -21,10 +21,10 @@ var logger = require('morgan'),
     session = require('express-session'),
     app = express();
 
-if(config.authClientID && config.authClientSecret) {
+if(config.github.authClientID && config.github.authClientSecret) {
   passport.use(new Strategy({
-    clientID: config.authClientID,
-    clientSecret: config.authClientSecret,
+    clientID: config.github.authClientID,
+    clientSecret: config.github.authClientSecret,
     callbackURL: config.botUrlRoot + "/login/auth/return"
   }, function (accessToken, refreshToken, profile, callback) {
     callback(null,profile);
@@ -46,17 +46,18 @@ app.use(logger('dev'));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/assets/material-design-lite', express.static('node_modules/material-design-lite'));
 
-if(config.webhookSecret) {
-	app.use(xhub({ algorithm: 'sha1', secret: config.webhookSecret}));
+if(config.github.webhookSecret) {
+	app.use(xhub({ algorithm: 'sha1', secret: config.github.webhookSecret}));
 }
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+console.log("secret: " +config.github.webhookSecret);
 app.use(session({
-  secret: config.webhookSecret,
+  secret: config.github.webhookSecret,
   resave: false,
   saveUninitialized: true,
 }));
-if(config.authClientID && config.authClientSecret) {
+if(config.github.authClientID && config.github.authClientSecret) {
   app.use(passport.initialize());
   app.use(passport.session());
 }
@@ -69,7 +70,7 @@ app.use('/nonmanaged', nonmanaged);
 app.use('/repos', repos);
 app.use('/audit', audit);
 
-if(config.authClientID && config.authClientSecret) {
+if(config.github.authClientID && config.github.authClientSecret) {
   app.use('/login', login);
 }
 
