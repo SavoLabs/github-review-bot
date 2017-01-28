@@ -25,7 +25,7 @@ function getComments(repo, number, callback ) {
 
 	github.issues.getComments({
 		repo: repo,
-		user: config.organization,
+		owner: config.organization,
 		number: number,
 		per_page: 100
 	}, function(err, res) {
@@ -47,7 +47,7 @@ function getCommentsSince(repo, number, date, callback) {
 function getLabels(repo, number, callback) {
 	auth.authenticate();
 	github.issues.getIssueLabels({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: number
 	}, function(err,result) {
@@ -60,7 +60,7 @@ function getLabels(repo, number, callback) {
 function edit(repo, number, data, callback) {
 	auth.authenticate();
 	github.issues.edit({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: number,
 		labels: data.labels ? JSON.stringify(data.labels) : undefined,

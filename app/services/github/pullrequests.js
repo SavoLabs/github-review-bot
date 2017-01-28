@@ -18,7 +18,7 @@ function get(prNumber, repo, callback) {
 	debug('GitHub: Attempting to get PR #' + prNumber);
 
 	github.pullRequests.get({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: prNumber
 	}, function(error, result) {
@@ -45,7 +45,7 @@ function getAll(repo, callback) {
 	* @param {Object[]} result - Returned pull request objects
 	*/
 	github.pullRequests.getAll({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		state: config.pullRequestStatus
 	}, function(error, result) {
@@ -81,7 +81,7 @@ function getCommits(repo, prNumber, callback) {
 	auth.authenticate();
 
 	github.pullRequests.getCommits({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: prNumber,
 		per_page: 100
@@ -111,7 +111,7 @@ function getMostRecentCommit(repo, prNumber, callback) {
 function getFiles(repo, number, callback) {
 	auth.authenticate();
 	github.pullRequests.getFiles({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: number
 	}, function(error, result) {

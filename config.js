@@ -61,12 +61,14 @@ config.filenameFilter = '';
 config.shameComment = ":bell: Shame! :bell: Shame!\nYou cannot vote to approve your own PR. 'A' for effort though.";
 // regex for "looks good"
 // do not use /g it causes failures on successful matches
-config.lgtmRegex = /((?:\s*LGTM(?:\s+|$))|(?:\s*looks good(?:\sto me!?)?(?:\s+|$))|(?:\s*:\+1:(?:\s+|$))|(?:\s*:shipit:(?:\s+|$))|(?:\s*👍(?:\s+|$)))/i;
+// config.lgtmRegex = /((?:\s*LGTM(?:\s+|$))|(?:\s*looks good(?:\sto me!?)?(?:\s+|$))|(?:\s*:\+1:(?:\s+|$))|(?:\s*:shipit:(?:\s+|$))|(?:\s*👍(?:\s+|$)))/i;
+config.lgtmRegex = /(:\+1:|(?:\blgtm\b|\blooks good(?:\sto me!?)?\b)|:shipit:|👍)/i;
 // regex for "needs work"
 // do not use /g it causes failures on successful matches
-config.needsWorkRegex = /((?:\s*:-1:(?:\s+|$))|(?:\s*needs work(?:\s+|$))|(?:\s*👎(?:\s+|$)))/i;
+// config.needsWorkRegex = /((?:\s*:-1:(?:\s+|$))|(?:\s*needs work(?:\s+|$))|(?:\s*👎(?:\s+|$)))/i;
+config.needsWorkRegex = /(\bneeds (?:some )?work\b|:-1:|👎)/i;
 // the events to hook to when attaching the bot to the repository
-config.pullRequestEvents = ['pull_request', 'issue_comment', 'pull_request_review_comment'];
+config.pullRequestEvents = ['pull_request', 'issue_comment', 'pull_request_review_comment', 'pull_request_review'];
 
 // the base url for the bot
 config.botUrlRoot = process.env.GRB_BOT_URL;
