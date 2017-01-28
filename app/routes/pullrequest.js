@@ -16,6 +16,10 @@ var express = require('express'),
 
   function _handlePREvent (req, res) {
 		githubApi.auth.isXHubValid(req, function(valid) {
+
+      // not sure why i have to parse this all of a suddon
+			let payload = req.body.payload ? JSON.parse(req.body.payload) : req.body;
+
 			if(!valid) {
 				console.log('XHub signature did not match expected.');
 				debug('XHub signature did not match expected.');
@@ -41,53 +45,51 @@ var express = require('express'),
 	      return _respond(res, `POST Request received, but ${eventName} is not the event I am looking for.`);
 	    }
 
-	    if (!req.body) {
+	    if (!payload) {
 	      console.log('POST Request received, but no body!');
 	      debug('POST Request received, but no body!');
 	      return _respond(res, 'POST Request received, but no body!');
 	    }
 
 			// assigned causes the bot to spam the instructions comment.
-			if(req.body.action && req.body.action === 'assigned') {
-				console.log('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
-	      debug('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
-	      return _respond(res, 'POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+			if(payload.action && payload.action === 'assigned') {
+				console.log('POST Request received, but "' + payload.action + '" is not an action I am looking for.');
+	      debug('POST Request received, but "' + payload.action + '" is not an action I am looking for.');
+	      return _respond(res, 'POST Request received, but "' + payload.action + '" is not an action I am looking for.');
 			}
 
 	    // the same spam happens if the PR is labeled before it is hooked
-	    if(req.body.action && req.body.action === 'labeled' && req.body.pull_request && req.body.pull_request.user.login === req.body.sender.login ) {
+	    if(payload.action && payload.action === 'labeled' && payload.pull_request && payload.pull_request.user.login === payload.sender.login ) {
 	      // make sure the label change is not one of the bot labels.
-	      if( req.body.label && ( req.body.label.name !== config.labelNeedsReview && req.body.label.name !== config.labelPeerReviewed ) ) {
-	        console.log('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
-	        debug('POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
-	        return _respond(res, 'POST Request received, but "' + req.body.action + '" is not an action I am looking for.');
+	      if( payload.label && ( payload.label.name !== config.labelNeedsReview && payload.label.name !== config.labelPeerReviewed ) ) {
+	        console.log('POST Request received, but "' + payload.action + '" is not an action I am looking for.');
+	        debug('POST Request received, but "' + payload.action + '" is not an action I am looking for.');
+	        return _respond(res, 'POST Request received, but "' + payload.action + '" is not an action I am looking for.');
 	      }
 	    }
-
-
-	    if (!req.body.repository) {
+	    if (!payload.repository) {
 	      console.log('POST Request received, but no repo found.');
 	      debug('POST Request received, but no repo found.');
 	      return _respond(res, 'POST Request received, but no repo found.');
 	    }
 
-			var repo = req.body.repository.name;
+			var repo = payload.repository.name;
 	    // Check if it's a simple PR action
-	    if (req.body.pull_request && req.body.pull_request.number) {
+	    if (payload.pull_request && payload.pull_request.number) {
 
-	      if ( req.body.pull_request.state && config.pullRequestsStatus.indexOf(req.body.pull_request.state) < 0 ) {
-	        console.log('POST Request received, but the PR is in a state that I do not care about (' + req.body.pull_request.state + ').');
-	        debug('POST Request received, but the PR is in a state that I do not care about (' + req.body.pull_request.state + ').');
-	        return _respond(res, 'POST Request received, but the PR is in a state that I do not care about (' + req.body.pull_request.state + ').');
+	      if ( payload.pull_request.state && config.pullRequestsStatus.indexOf(payload.pull_request.state) < 0 ) {
+	        console.log('POST Request received, but the PR is in a state that I do not care about (' + payload.pull_request.state + ').');
+	        debug('POST Request received, but the PR is in a state that I do not care about (' + payload.pull_request.state + ').');
+	        return _respond(res, 'POST Request received, but the PR is in a state that I do not care about (' + payload.pull_request.state + ').');
 	    	}
 
-	      bot.checkForLabel(req.body.pull_request.number, repo, req.body.pull_request, req.body.action, processPullRequest);
-	      return _respond(res, 'Processing PR ' + req.body.pull_request.number);
+	      bot.checkForLabel(payload.pull_request.number, repo, payload.pull_request, payload.action, processPullRequest);
+	      return _respond(res, 'Processing PR ' + payload.pull_request.number);
 	    }
 
 	    // Check if it's an issue action (comment, for instance)
-	    if (req.body.issue && req.body.issue.pull_request) {
-	        githubApi.pullrequests.get(req.body.issue.number, repo, function (pullRequests) {
+	    if (payload.issue && payload.issue.pull_request) {
+	        githubApi.pullrequests.get(payload.issue.number, repo, function (pullRequests) {
 	            if (!pullRequests || pullRequests.length < 0) {
 	              console.log('Error: Tried to process single pull request, but failed');
 	              debug('Error: Tried to process single pull request, but failed');
@@ -99,9 +101,9 @@ var express = require('express'),
 	              debug('POST Request received, but the PR is in a state that I do not care about (' + pr0.state + ').');
 	              return _respond(res, 'POST Request received, but the PR is in a state that I do not care about (' + pr0.state + ').');
 	            }
-	            bot.checkForLabel(pr0.number, repo, pr0, req.body.action, processPullRequest);
+	            bot.checkForLabel(pr0.number, repo, pr0, payload.action, processPullRequest);
 	        });
-	        return _respond(res, 'Processing PR as Issue' + req.body.issue.number);
+	        return _respond(res, 'Processing PR as Issue' + payload.issue.number);
 	    }
 		});
   }

@@ -35,7 +35,8 @@
   },
   "scripts": {
     "start": "node ./bin/www",
-    "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
+    "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec",
+    "exec": "nodemon ./bin/www"
   },
   "author": "Savo",
   "license": "MIT"
