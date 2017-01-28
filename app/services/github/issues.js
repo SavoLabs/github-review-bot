@@ -63,7 +63,7 @@ function edit(repo, number, data, callback) {
 		user: config.organization,
 		repo: repo,
 		number: number,
-		labels: data.labels ? JSON.stringify(data.labels) : undefined,
+		labels: data.labels ? data.labels : undefined,
 		title: data.title ? data.title : undefined,
 		body: data.body ? data.body : undefined,
 		assignee: data.assignee ? data.assignee : undefined,
