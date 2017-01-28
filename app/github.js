@@ -1,3 +1,4 @@
+'use strict';
 var githubApi = require('./services/github/github-api'),
 	webhooks = require('./services/github/webhooks'),
 	repos = require('./services/github/repository'),

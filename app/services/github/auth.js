@@ -1,3 +1,4 @@
+'use strict';
 var githubApi = require('./github-api'),
 	github = githubApi.service,
 	debug = require('debug')('reviewbot:bot'),

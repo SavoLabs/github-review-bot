@@ -1,3 +1,4 @@
+'use strict';
 var express = require('express'),
 		bot = require('../bot'),
 		passport = require('passport'),
