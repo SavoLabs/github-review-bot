@@ -7,7 +7,7 @@ var githubApi = require('./github-api'),
 function get( repo, callback ) {
 	auth.authenticate();
 	github.repos.get({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo
 	}, function(err, res) {
 		callback(res);

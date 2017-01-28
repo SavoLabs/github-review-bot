@@ -328,7 +328,6 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 
 						let review = result[i];
 						console.log(`Processing Review: ${review.id}`);
-						console.log(review);
 						let who = review.user.login;
 						if (who === createdBy) {
 							continue;
