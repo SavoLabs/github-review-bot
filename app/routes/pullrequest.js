@@ -35,9 +35,9 @@ var express = require('express'),
 
 	    // ensure we only handle events we know how to handle
 	    if( config.pullRequestEvents.indexOf(eventName) < 0 ) {
-	      console.log('POST Request received, but this is not the event I am looking for.');
-	      debug('POST Request received, but this is not the event I am looking for.');
-	      return _respond(res, 'POST Request received, but this is not the event I am looking for.');
+	      console.log(`POST Request received, but ${eventName} is not the event I am looking for.`);
+	      debug(`POST Request received, but ${eventName} is not the event I am looking for.`);
+	      return _respond(res, `POST Request received, but ${eventName} is not the event I am looking for.`);
 	    }
 
 	    if (!req.body) {

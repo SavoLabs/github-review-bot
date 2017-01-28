@@ -4,6 +4,11 @@ var githubApi = require('./github-api'),
 	debug = require('debug')('reviewbot:bot'),
 	config = require('../../../config');
 
+	const reviewStates = {
+		approved: "APPROVED",
+		pending: "PENDING",
+		rejected: "????"
+	};
 
 /**
  * Fetch a single pull requests in the currently configured repo
@@ -18,7 +23,7 @@ function get(prNumber, repo, callback) {
 	debug('GitHub: Attempting to get PR #' + prNumber);
 
 	github.pullRequests.get({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: prNumber
 	}, function(error, result) {
@@ -45,7 +50,7 @@ function getAll(repo, callback) {
 	* @param {Object[]} result - Returned pull request objects
 	*/
 	github.pullRequests.getAll({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		state: config.pullRequestStatus
 	}, function(error, result) {
@@ -81,7 +86,7 @@ function getCommits(repo, prNumber, callback) {
 	auth.authenticate();
 
 	github.pullRequests.getCommits({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: prNumber,
 		per_page: 100
@@ -111,7 +116,7 @@ function getMostRecentCommit(repo, prNumber, callback) {
 function getFiles(repo, number, callback) {
 	auth.authenticate();
 	github.pullRequests.getFiles({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		number: number
 	}, function(error, result) {
@@ -121,10 +126,44 @@ function getFiles(repo, number, callback) {
 	});
 }
 
+
+let _knownReviews = [];
+let _getReviews = ( err, res, callback) => {
+		if(err){
+			return false;
+		}
+		_knownReviews = _knownReviews.concat(res);
+		if(github.hasNextPage(res)) {
+			github.getNextPage(res, (err,res) => { _getReviews(err,res,callback) });
+		} else {
+			if(callback) {
+				callback(err, _knownReviews);
+			}
+		}
+};
+
+let getAllReviews = (repo, number, callback) => {
+	_knownReviews = [];
+	auth.authenticate();
+	github.pullRequests.getReviews({
+		owner: config.organization,
+		repo: repo,
+		number: number,
+		per_page: 100
+	}, (err,res) => {
+		if(err){
+			console.error(err);
+		}
+		_getReviews(err, res, callback);
+	});
+};
+
 module.exports = {
 	get: get,
 	getAll: getAll,
 	getMostRecentCommit: getMostRecentCommit,
 	getCommits: getCommits,
-	getFiles: getFiles
+	getFiles: getFiles,
+	getAllReviews: getAllReviews,
+	reviewStates: reviewStates
 };

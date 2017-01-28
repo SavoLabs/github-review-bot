@@ -25,7 +25,7 @@ var githubApi = require('./github-api'),
 		console.log("membership for " + user.username + " in " + config.organization);
 		github.orgs.getOrganizationMembership({
 			org: config.organization,
-			user: user.username
+			username: user.username
 		}, function(err, result) {
 			if(err){
 				callback(false);
