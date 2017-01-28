@@ -24,7 +24,7 @@ function getAll(repo, callback) {
 	auth.authenticate();
 	_knownHooks = [];
 	github.repos.getHooks({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo.name,
 		per_page: 100
 	}, function(err,res) {
@@ -35,7 +35,7 @@ function getAll(repo, callback) {
 function createWebHook (repo, url, events, callback) {
 	auth.authenticate();
 	github.repos.createHook({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		name: "web",
 		config: {
@@ -54,7 +54,7 @@ function createWebHook (repo, url, events, callback) {
 function deleteWebHook ( repo, id, callback ) {
 	auth.authenticate();
 	github.repos.deleteHook({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		id: id
 	}, function(err, reply) {
@@ -68,7 +68,7 @@ function getWebHookId(repo, action, callback) {
 	auth.authenticate();
 	var result;
 	github.repos.getHooks({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo
 	}, function(err,hooks) {
 		if(hooks && hooks.length) {
@@ -85,7 +85,7 @@ function getWebHookId(repo, action, callback) {
 function createStatus (repo, status, sha, description, callback) {
 	auth.authenticate();
 	github.repos.createStatus({
-		user: config.organization,
+		owner: config.organization,
 		repo: repo,
 		state: status,
 		sha: sha,
