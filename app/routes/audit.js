@@ -15,20 +15,21 @@ let requireLoggedIn = () => {
 /* GET home page. */
 router.get('/', requireLoggedIn(), function(req, res, next) {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
-		if (allowed) {
-			github.users.getAll("2fa_disabled").then((result) => {
-				res.render("audit", {
-					users: result
-				});
-			}, (err) => {
-				throw err;
-			});
-		} else {
+		if (!allowed) {
 			console.log("not Authorized");
 			var err = new Error('Not Authorized.');
 			err.status = 403;
 			throw err;
 		}
+
+		github.users.getAll("2fa_disabled").then((result) => {
+			res.render("audit", {
+				users: result
+			});
+		}, (err) => {
+			throw err;
+		});
+
 	}, (err) => {
 		throw err;
 	});

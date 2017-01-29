@@ -5,26 +5,40 @@ const debug = require('debug')('reviewbot:bot');
 const config = require('../config');
 const Promise = require('promise');
 
-function enforce(repo, reviewsNeeded, callback) {
-	var resultReviewsNeeded = reviewsNeeded;
-	if (!resultReviewsNeeded || isNaN(resultReviewsNeeded) || resultReviewsNeeded < 1) {
-		resultReviewsNeeded = config.reviewsNeeded;
-	}
-	var cbUrl = config.botUrlRoot + "/pullrequest/" + resultReviewsNeeded.toString()
-	githubApi.webhooks.createWebHook(repo, cbUrl, config.pullRequestEvents, callback);
-}
-
-function unenforce(repo, callback) {
-	githubApi.webhooks.getWebHookId(repo, '/pullrequest', function(err, id) {
-		if (!id || err) {
-			// no hook found, we can just return
-			callback(null, {
-				result: 'ok'
-			});
-			return;
+let enforce = (repo, reviewsNeeded) => {
+	return new Promise(function(resolve, reject) {
+		var resultReviewsNeeded = reviewsNeeded;
+		if (!resultReviewsNeeded || isNaN(resultReviewsNeeded) || resultReviewsNeeded < 1) {
+			resultReviewsNeeded = config.reviewsNeeded;
 		}
-		githubApi.webhooks.deleteWebHook(repo, id, function(err, reply) {
-			callback(err, reply);
+		var cbUrl = config.botUrlRoot + "/pullrequest/" + resultReviewsNeeded.toString()
+		githubApi.webhooks.createWebHook(repo, cbUrl, config.pullRequestEvents).then((result) => {
+			resolve(result);
+		}, (err) => {
+			reject(err);
+		});
+	});
+
+};
+
+let unenforce = (repo) => {
+	return new Promise(function(resolve, reject) {
+		githubApi.webhooks.getWebHookId(repo, '/pullrequest').then((id) => {
+			if (!id) {
+				// no hook found, we can just return
+				return resolve({
+					result: 'ok'
+				});
+			}
+			githubApi.webhooks.deleteWebHook(repo, id).then((reply) => {
+				// return the response
+				resolve(reply);
+			}, (err) => {
+				reject(err);
+			});
+		}, (err) => {
+			// getWebHookId should never err.
+			reject(err);
 		});
 	});
 }
@@ -45,9 +59,14 @@ function _setStatus(repo, pr, state, remaining, callback) {
 			status = "pending";
 			desc = "Waiting for " + remaining + " code " + reviewsPluralized + "...";
 	}
-	githubApi.webhooks.createStatus(repo, status, pr.head.sha, desc, function(err, reply) {
+	githubApi.webhooks.createStatus(repo, status, pr.head.sha, desc).then((reply) => {
 		if (callback) {
 			callback(err, reply);
+		}
+	}, (err) => {
+		console.error(err);
+		if(err && callback) {
+			callback(err, null);
 		}
 	});
 }
@@ -139,7 +158,7 @@ function checkForLabel(prNumber, repo, pr, action, callback) {
 			console.log('checkForLabel: Error while fetching labels for single PR: ');
 			console.error(err);
 			return debug('checkForLabel: Error while fetching labels for single PR: ', err);
-		} else{
+		} else {
 			return debug("checkForLabel: Unknoen error while fetching labels for single PR")
 		}
 
@@ -268,8 +287,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				}
 			}
 			if (!shamed && needsShame) {
-				githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment).then((result) => {
-				}, (err) => {
+				githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment).then((result) => {}, (err) => {
 					console.error(err);
 				});
 			}
@@ -504,7 +522,7 @@ function postInstructionsComment(prNumber, repo, callback) {
 			}
 
 			githubApi.comments.postComment(prNumber, repo, comment).then((result) => {
-				if(callback) {
+				if (callback) {
 					callback(result);
 				}
 			}, (err) => {
