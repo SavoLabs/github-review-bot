@@ -1,37 +1,50 @@
 'use strict';
-var githubApi = require('./github-api'),
-	github = githubApi.service,
-	auth = require('./auth'),
-	debug = require('debug')('reviewbot:bot'),
-	config = require('../../../config');
+const githubApi = require('./github-api');
+const github = githubApi.service;
+const auth = require('./auth');
+const debug = require('debug')('reviewbot:bot');
+const config = require('../../../config');
+const Promise = require('promise');
 
 var _knownUsers = [];
-function _getAllUsers ( err, res, callback ) {
-	if(err){
-		return false;
-	}
-	_knownUsers = _knownUsers.concat(res);
-	if(github.hasNextPage(res)) {
-		github.getNextPage(res, function(err,res) { _getAllUsers(err,res,callback) });
-	} else {
-		if(callback) {
-			callback(err,_knownUsers);
+let _getAllUsers = (res) => {
+	return new Promise((resolve, reject) => {
+		_knownUsers = _knownUsers.concat(res);
+		if (github.hasNextPage(res)) {
+			github.getNextPage(res, (err, res) => {
+				return _getAllUsers(res).then((result) => {
+					return resolve(result);
+				}, (err) => {
+					console.error(err);
+					return reject(err);
+				});
+			});
+		} else {
+			return resolve(_knownUsers);
 		}
-	}
-}
-
-function getAll(filter, callback) {
-	auth.authenticate();
-	_knownUsers = [];
-
-	github.orgs.getMembers({
-		org: config.organization,
-		filter: filter ? filter : 'all',
-		per_page: 100
-	}, function(err,res) {
-		_getAllUsers(err,res, callback);
 	});
-}
+};
+
+let getAll = (filter) => {
+	return new Promise(function(resolve, reject) {
+		auth.authenticate();
+		_knownUsers = [];
+		github.orgs.getMembers({
+			org: config.organization,
+			filter: filter ? filter : 'all',
+			per_page: 100
+		}, function(err, res) {
+			if (err) {
+				return reject(err);
+			}
+			return _getAllUsers(res).then((results) => {
+				return resolve(results);
+			}, (err) => {
+				return reject(err);
+			});
+		});
+	});
+};
 
 module.exports = {
 	getAll: getAll

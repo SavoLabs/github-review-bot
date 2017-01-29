@@ -35,12 +35,14 @@ let _getRepos = (res) => {
 					return reject(err);
 				}
 				return _getRepos(res).then((result) => {
+					console.log(result);
 					return resolve(result);
 				}, (err) => {
 					return reject(err);
 				});
 			});
 		} else {
+			console.log(_knownRepos);
 			return resolve(_knownRepos);
 		}
 	});
@@ -60,6 +62,7 @@ let getAll = () => {
 				return reject(err);
 			}
 			return _getRepos(res).then((result) => {
+				console.log(result);
 				return resolve(result);
 			}, (err) => {
 				return reject(err);
