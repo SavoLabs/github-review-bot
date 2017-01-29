@@ -21,7 +21,8 @@
     "mdi": "^1.6.50",
     "morgan": "^1.7.0",
     "passport": "^0.3.2",
-    "passport-github": "^1.1.0"
+    "passport-github": "^1.1.0",
+    "promise": "^7.1.1"
   },
   "devDependencies": {
     "chai": "^3.5.0",

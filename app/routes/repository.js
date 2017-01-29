@@ -2,17 +2,18 @@
 // this is an org level hook for when a new repo is created
 // allows the repo to be hooked to the bot when it is created
 
-var express = require('express'),
-    bot = require('../bot'),
-    githubApi = require('../github'),
-    config = require('../../config'),
-    debug = require('debug')('reviewbot:repository'),
-    router = express.Router();
+const express = require('express');
+const bot = require('../bot');
+const githubApi = require('../github');
+const config = require('../../config');
+const debug = require('debug')('reviewbot:repository');
+const router = express.Router();
+const Promise = require('promise');
 
 router.post('/', _processRepositoryEvent );
 
 function _processRepositoryEvent (req, res) {
-	githubApi.auth.isXHubValid(req, function(valid) {
+	githubApi.auth.isXHubValid(req).then((valid) => {
 		if(!valid) {
 			console.log('XHub signature did not match expected.');
 			debug('XHub signature did not match expected.');
@@ -55,6 +56,8 @@ function _processRepositoryEvent (req, res) {
 				return _respond(res, 'Error while creating webhook for repository: ' + repo.name);
 			}
 		});
+	}, (err) => {
+		throw err;
 	});
 }
 

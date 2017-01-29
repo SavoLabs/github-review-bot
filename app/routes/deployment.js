@@ -1,11 +1,12 @@
 'use strict';
-var express = require('express'),
-    bot = require('../bot'),
-    githubApi = require('../github'),
-    config = require('../../config'),
-    debug = require('debug')('reviewbot:deployment'),
-    router = express.Router(),
-		loginRoute = '/login';
+const express = require('express');
+const bot = require('../bot');
+const githubApi = require('../github');
+const config = require('../../config');
+const debug = require('debug')('reviewbot:deployment');
+const router = express.Router();
+const loginRoute = '/login';
+const Promise = require('promise');
 
 var requireLoggedIn = function () {
 	return require('connect-ensure-login').ensureLoggedIn(loginRoute);

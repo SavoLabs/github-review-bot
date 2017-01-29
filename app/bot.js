@@ -275,7 +275,10 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				}
 			}
 			if (!shamed && needsShame) {
-				githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment);
+				githubApi.comments.postComment(prNumber, repo, "@" + createdBy + " " + config.shameComment).then((result) => {
+				}, (err) => {
+					console.error(err);
+				});
 			}
 
 			// process the reactions on the PR
@@ -491,7 +494,13 @@ function postInstructionsComment(prNumber, repo, callback) {
 				comment = comment.replace('{reviewsNeeded}', config.reviewsNeeded);
 			}
 
-			githubApi.comments.postComment(prNumber, repo, comment, callback);
+			githubApi.comments.postComment(prNumber, repo, comment).then((result) => {
+				if(callback) {
+					callback(result);
+				}
+			}, (err) => {
+				throw err;
+			});
 		}
 	});
 

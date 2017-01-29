@@ -1,11 +1,11 @@
 'use strict';
-var express = require('express'),
-    bot = require('../bot'),
-    githubApi = require('../github'),
-    config = require('../../config'),
-    debug = require('debug')('reviewbot:pullrequest'),
-    router = express.Router();
-
+const express = require('express');
+const bot = require('../bot');
+const githubApi = require('../github');
+const config = require('../../config');
+const debug = require('debug')('reviewbot:pullrequest');
+const router = express.Router();
+const Promise = require('promise');
 
   /**
    * POST /pullrequest: Process incoming GitHub payload
@@ -15,7 +15,7 @@ var express = require('express'),
 
 
   function _handlePREvent (req, res) {
-		githubApi.auth.isXHubValid(req, function(valid) {
+		githubApi.auth.isXHubValid(req).then((valid) => {
 
       // not sure why i have to parse this all of a suddon
 			let payload = req.body.payload ? JSON.parse(req.body.payload) : req.body;
@@ -105,6 +105,8 @@ var express = require('express'),
 	        });
 	        return _respond(res, 'Processing PR as Issue' + payload.issue.number);
 	    }
+		}, (err) => {
+			throw err;
 		});
   }
 
