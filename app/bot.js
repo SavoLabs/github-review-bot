@@ -96,19 +96,15 @@ function checkForLabel(prNumber, repo, pr, action, callback) {
 		console.log('checkForLabel: insufficient parameters');
 		return debug('checkForLabel: insufficient parameters');
 	}
-	githubApi.issues.getLabels(repo, prNumber, function(error, labels) {
-		var excludeLabels = config.excludeLabels,
-			labeledNeedsReview = false,
-			labeledReviewed = false,
-			labeledExclude = false,
-			labeledNeedsWork = false,
-			outLabels = [];
+	githubApi.issues.getLabels(repo, prNumber).then((labels) => {
+		let excludeLabels = config.excludeLabels;
+		let labeledNeedsReview = false;
+		let labeledReviewed = false;
+		let labeledExclude = false;
+		let labeledNeedsWork = false;
+		let outLabels = [];
 
-		if (error) {
-			console.log('checkForLabel: Error while fetching labels for single PR: ');
-			console.log(error);
-			return debug('checkForLabel: Error while fetching labels for single PR: ', error);
-		}
+
 
 		// Check if already labeled
 		for (var i = 0; i < labels.length; i++) {
@@ -125,8 +121,6 @@ function checkForLabel(prNumber, repo, pr, action, callback) {
 				console.log("new push. needs review again.");
 				labeledReviewed = false;
 			} else {
-				console.log("action: " + action);
-				console.log("label: " + labels[i].name);
 				outLabels.push(labels[i]);
 			}
 		}
@@ -140,6 +134,15 @@ function checkForLabel(prNumber, repo, pr, action, callback) {
 				labels: outLabels
 			}, pr, action);
 		}
+	}, (err) => {
+		if (err) {
+			console.log('checkForLabel: Error while fetching labels for single PR: ');
+			console.error(err);
+			return debug('checkForLabel: Error while fetching labels for single PR: ', err);
+		} else{
+			return debug("checkForLabel: Unknoen error while fetching labels for single PR")
+		}
+
 	});
 }
 
@@ -463,20 +466,20 @@ function updateLabels(prNumber, repo, approved, needsWork, labels, callback) {
 	if (changed) {
 		githubApi.issues.edit(repo, prNumber, {
 			labels: labels
-		}, function(err, result) {
-			if (err) {
-				console.log('labelPullRequest: error while trying to label PR:');
-				console.log(err);
-				debug('labelPullRequest: error while trying to label PR: ', err);
-				callback(null)
-				return;
-			}
-
+		}).then((result) => {
 			if (callback) {
 				callback(result);
 			}
+		}, (err) => {
+			if (err) {
+				console.log('labelPullRequest: error while trying to label PR:');
+				console.log(err);
+				callback(null)
+				return debug('labelPullRequest: error while trying to label PR: ', err);
+			} else {
+				return debug('labelPullRequest: An unknown error while trying to label PR:');
+			}
 		});
-
 	}
 }
 

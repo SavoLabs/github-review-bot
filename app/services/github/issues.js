@@ -57,34 +57,42 @@ let getCommentsSince = (repo, number, date) => {
 	});
 };
 
-let getLabels = (repo, number, callback) => {
-	auth.authenticate();
-	github.issues.getIssueLabels({
-		owner: config.organization,
-		repo: repo,
-		number: number
-	}, function(err, result) {
-		if (callback) {
-			callback(err, result);
-		}
+let getLabels = (repo, number) => {
+	return new Promise(function(resolve, reject) {
+		auth.authenticate();
+		github.issues.getIssueLabels({
+			owner: config.organization,
+			repo: repo,
+			number: number
+		}, function(err, result) {
+			if(err) {
+				reject(err);
+			} else {
+				resolve(results);
+			}
+		});
 	});
 }
 
-let edit = (repo, number, data, callback) => {
-	auth.authenticate();
-	github.issues.edit({
-		owner: config.organization,
-		repo: repo,
-		number: number,
-		labels: data.labels ? data.labels : undefined,
-		title: data.title ? data.title : undefined,
-		body: data.body ? data.body : undefined,
-		assignee: data.assignee ? data.assignee : undefined,
-		assignees: data.assignees ? data.assignees : undefined,
-	}, function(error, result) {
-		if (callback) {
-			callback(error, result);
-		}
+let edit = (repo, number, data) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		github.issues.edit({
+			owner: config.organization,
+			repo: repo,
+			number: number,
+			labels: data.labels ? data.labels : undefined,
+			title: data.title ? data.title : undefined,
+			body: data.body ? data.body : undefined,
+			assignee: data.assignee ? data.assignee : undefined,
+			assignees: data.assignees ? data.assignees : undefined,
+		}, function(err, result) {
+			if(err) {
+				reject(err)
+			} else {
+				resolve(result);
+			}
+		});
 	});
 };
 
