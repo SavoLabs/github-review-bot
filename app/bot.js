@@ -70,21 +70,20 @@ function checkForFiles(prNumber, repo, callback) {
 		return callback(true);
 	}
 
-	githubApi.pullrequests.getFiles(repo, prNumber, function(err, files) {
-		var match = false,
-			i, ii;
-		if (err) {
-			return debug('commentInstructions: error while trying fetch comments: ', err);
-		}
-
-		for (i = 0; i < files.length; i = i + 1) {
-			for (var ii = 0; ii < filenameFilter.length; ii = ii + 1) {
+	githubApi.pullrequests.getFiles(repo, prNumber).then((files) => {
+		let match = false;
+		for (let i = 0; i < files.length; i = i + 1) {
+			for (let ii = 0; ii < filenameFilter.length; ii = ii + 1) {
 				match = (result[i].filename.indexOf(filenameFilter[ii]) > -1) ? true : match;
 				if (match) {
 					return callback(true);
 				}
 			}
 		}
+		return callback(false);
+	}, (err) => {
+		console.error(err);
+		return debug('commentInstructions: error while trying fetch comments: ', err);
 	});
 }
 
@@ -186,8 +185,8 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 
 	// we get the commits for the PR, so we can get the date of the most recent commit.
 	// any votes before this date, will be ignored.
-	githubApi.pullrequests.getMostRecentCommit(repo, prNumber, function(err, lastCommit) {
-		if (err || !lastCommit) {
+	githubApi.pullrequests.getMostRecentCommit(repo, prNumber).then((lastCommit) => {
+		if (!lastCommit) {
 			console.log('Unable to get the most recent commit.');
 			return debug('Unable to get the most recent commit.');
 		}
@@ -312,7 +311,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				}
 
 				console.log("getAllReviews: before");
-				githubApi.pullrequests.getAllReviews(repo, prNumber, (err, result) => {
+				githubApi.pullrequests.getAllReviews(repo, prNumber).then((result) => {
 					console.log("getAllReviews: start");
 					if (err) {
 						console.log("error");
@@ -385,6 +384,10 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 						console.log("needsWork: " + needsWork);
 						callback(approved, needsWork);
 					}
+				}, (err) => {
+					console.log('checkForApprovalComments: Error while fetching reviews for single PR: ');
+					console.log(err);
+					return debug('checkForApprovalComments: Error while fetching coments for single PR: ', err);
 				});
 			});
 		}, (err) => {
@@ -392,6 +395,10 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 			console.log(err);
 			return debug('checkForApprovalComments: Error while fetching coments for single PR: ', err);
 		});
+	}, (err) => {
+		console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
+		console.log(err);
+		return debug('checkForApprovalComments: Error while fetching coments for single PR: ', err);
 	});
 }
 

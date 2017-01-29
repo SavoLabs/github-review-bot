@@ -1,162 +1,196 @@
 'use strict';
 
-var githubApi = require('./github-api'),
-	github = githubApi.service,
-	auth = require('./auth'),
-	debug = require('debug')('reviewbot:bot'),
-	config = require('../../../config');
+const githubApi = require('./github-api');
+const github = githubApi.service;
+const auth = require('./auth');
+const debug = require('debug')('reviewbot:bot');
+const config = require('../../../config');
+const Promise = require('promise');
 
-	const reviewStates = {
-		approved: "APPROVED",
-		pending: "PENDING",
-		rejected: "????"
-	};
+const reviewStates = {
+	approved: "APPROVED",
+	pending: "PENDING",
+	rejected: "????"
+};
 
 /**
  * Fetch a single pull requests in the currently configured repo
- * @callback {getPullRequestsCb} callback
+ * @callback {results[]}
  */
-function get(prNumber, repo, callback) {
-	auth.authenticate();
-	/**
-	 * @callback getPullRequestsCb
-	 * @param {Object[]} result - Returned pull request objects
-	 */
-	debug('GitHub: Attempting to get PR #' + prNumber);
+let get = (prNumber, repo) => {
+	return new Promise(function(resolve, reject) {
+		auth.authenticate();
+		/**
+		 * @callback getPullRequestsCb
+		 * @param {Object[]} result - Returned pull request objects
+		 */
+		debug('GitHub: Attempting to get PR #' + prNumber);
 
-	github.pullRequests.get({
-		owner: config.organization,
-		repo: repo,
-		number: prNumber
-	}, function(error, result) {
-		if (error) {
-			return debug('getPullRequests: Error while fetching PRs: ' + error);
-		}
-		debug('GitHub: PR successfully recieved. Changed files: ' + result.changed_files);
-		if (callback) {
-			callback([result]);
-		}
+		github.pullRequests.get({
+			owner: config.organization,
+			repo: repo,
+			number: prNumber
+		}, function(err, result) {
+			if (err) {
+				debug('getPullRequests: Error while fetching PRs: ' + err);
+				return reject(err);
+			}
+			debug('GitHub: PR successfully recieved. Changed files: ' + result.changed_files);
+			resolve([result]);
+		});
 	});
 }
 
 
 /**
  * Fetch all pull requests in the currently configured repo
- * @callback {getPullRequestsCb} callback
+ * @callback {results[]}
  */
-function getAll(repo, callback) {
-	auth.authenticate();
-
-	/**
-	* @callback getPullRequestsCb
-	* @param {Object[]} result - Returned pull request objects
-	*/
-	github.pullRequests.getAll({
-		owner: config.organization,
-		repo: repo,
-		state: config.pullRequestStatus
-	}, function(error, result) {
-		if (error) {
-			return debug('getPullRequests: Error while fetching PRs: ', error);
-		}
-
-		if (!result || !result.length || result.length < 1) {
-			return debug('getPullRequests: No open PRs found');
-		}
-
-		if (callback) {
-			callback(result);
-		}
-	});
-}
-var _knownCommits = [];
-function _getCommits(err, res, callback) {
-		if(err){
-			return false;
-		}
-		_knownCommits = _knownCommits.concat(res);
-		if(github.hasNextPage(res)) {
-			github.getNextPage(res, function(err,res) { _getCommits(err,res,callback) });
-		} else {
-			if(callback) {
-				callback(err,_knownCommits);
+let getAll = (repo, callback) => {
+	return new Promise(function(resolve, reject) {
+		auth.authenticate();
+		github.pullRequests.getAll({
+			owner: config.organization,
+			repo: repo,
+			state: config.pullRequestStatus
+		}, (err, result) => {
+			if (err) {
+				debug('getPullRequests: Error while fetching PRs: ', err);
+				return reject(err);
 			}
-		}
-}
 
-function getCommits(repo, prNumber, callback) {
-	auth.authenticate();
-
-	github.pullRequests.getCommits({
-		owner: config.organization,
-		repo: repo,
-		number: prNumber,
-		per_page: 100
-	}, function(err, result) {
-		_getCommits(err, result, callback);
+			if (!result || !result.length || result.length < 1) {
+				reject('getPullRequests: No open PRs found');
+				debug('getPullRequests: No open PRs found');
+			}
+			return resolve(result);
+		});
 	});
 }
 
-function getMostRecentCommit(repo, prNumber, callback) {
-	this.getCommits(repo, prNumber, function(err, result) {
-		var recentDate = new Date(1970,0,1,0,0,0);
-		var recent = null;
-		for(var i = 0; i < result.length; ++i) {
-			var c = result[i];
-			if(c.commit && c.commit.author && c.commit.author.date) {
-				var tdate = Date.parse(c.commit.author.date);
-				if(tdate > recentDate) {
-					recent = c;
-					recentDate = tdate;
+let _knownCommits = [];
+
+let _getCommits = (res) => {
+	return new Promise((resolve, reject) => {
+		_knownCommits = _knownCommits.concat(res);
+		if (github.hasNextPage(res)) {
+			github.getNextPage(res, (err, res) => {
+				if (err) {
+					return reject(err);
+				}
+				_getCommits(res).then((results) => {
+					return resolve(results);
+				}, (err) => {
+					return reject(err);
+				})
+			});
+		} else {
+			return resolve(_knownCommits);
+		}
+	});
+}
+
+let getCommits = (repo, prNumber) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		github.pullRequests.getCommits({
+			owner: config.organization,
+			repo: repo,
+			number: prNumber,
+			per_page: 100
+		}, (err, result) => {
+			if (err) {
+				return reject(err);
+			}
+			_getCommits(err, result).then((results) => {
+				return resolve(results);
+			}, (err) => {
+				return reject(err);
+			});
+		});
+	});
+};
+
+let getMostRecentCommit = (repo, prNumber) => {
+	return new Promise((resolve, reject) => {
+		getCommits(repo, prNumber).then((result) => {
+			var recentDate = new Date(1970, 0, 1, 0, 0, 0);
+			var recent = null;
+			for (var i = 0; i < result.length; ++i) {
+				var c = result[i];
+				if (c.commit && c.commit.author && c.commit.author.date) {
+					var tdate = Date.parse(c.commit.author.date);
+					if (tdate > recentDate) {
+						recent = c;
+						recentDate = tdate;
+					}
 				}
 			}
-		}
-		callback(err, recent);
+			return resolve(recent);
+		}, (err) => {
+			return reject(err);
+		});
 	});
 }
 
-function getFiles(repo, number, callback) {
-	auth.authenticate();
-	github.pullRequests.getFiles({
-		owner: config.organization,
-		repo: repo,
-		number: number
-	}, function(error, result) {
-		if(callback) {
-			callback(error, result);
-	 	}
+let getFiles = (repo, number) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		github.pullRequests.getFiles({
+			owner: config.organization,
+			repo: repo,
+			number: number
+		}, function(err, result) {
+			if(err) {
+				return reject(err);
+			}
+			return resolve(result);
+		});
 	});
 }
 
 
 let _knownReviews = [];
-let _getReviews = ( err, res, callback) => {
-		if(err){
-			return false;
-		}
+let _getReviews = (res) => {
+	return new Promise((resolve, reject) => {
 		_knownReviews = _knownReviews.concat(res);
-		if(github.hasNextPage(res)) {
-			github.getNextPage(res, (err,res) => { _getReviews(err,res,callback) });
+		if (github.hasNextPage(res)) {
+			github.getNextPage(res, (err, res) => {
+				if(err) {
+					return reject(err);
+				}
+				return _getReviews(res).then((results) => {
+					return resolve(results);
+				}, (err) => {
+					return reject(err);
+				});
+			});
 		} else {
-			if(callback) {
-				callback(err, _knownReviews);
-			}
+			return resolve(_knownReviews);
 		}
+	});
 };
 
-let getAllReviews = (repo, number, callback) => {
-	_knownReviews = [];
-	auth.authenticate();
-	github.pullRequests.getReviews({
-		owner: config.organization,
-		repo: repo,
-		number: number,
-		per_page: 100
-	}, (err,res) => {
-		if(err){
-			console.error(err);
-		}
-		_getReviews(err, res, callback);
+let getAllReviews = (repo, number) => {
+	return new Promise(function(resolve, reject) {
+		_knownReviews = [];
+		auth.authenticate();
+		github.pullRequests.getReviews({
+			owner: config.organization,
+			repo: repo,
+			number: number,
+			per_page: 100
+		}, (err, res) => {
+			if (err) {
+				return reject(err);
+			}
+			return _getReviews(res).then((result) => {
+				return resolve(result);
+			}, (err) => {
+				console.error(err);
+				return reject(err);
+			});
+		});
 	});
 };
 

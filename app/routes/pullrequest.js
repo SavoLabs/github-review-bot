@@ -89,7 +89,7 @@ const Promise = require('promise');
 
 	    // Check if it's an issue action (comment, for instance)
 	    if (payload.issue && payload.issue.pull_request) {
-	        githubApi.pullrequests.get(payload.issue.number, repo, function (pullRequests) {
+	        githubApi.pullrequests.get(payload.issue.number, repo).then((pullRequests) => {
 	            if (!pullRequests || pullRequests.length < 0) {
 	              console.log('Error: Tried to process single pull request, but failed');
 	              debug('Error: Tried to process single pull request, but failed');
@@ -102,7 +102,11 @@ const Promise = require('promise');
 	              return _respond(res, 'POST Request received, but the PR is in a state that I do not care about (' + pr0.state + ').');
 	            }
 	            bot.checkForLabel(pr0.number, repo, pr0, payload.action, processPullRequest);
-	        });
+	        }, (err) => {
+						console.error(err);
+						debug("Error: " + err.toString());
+						return _resond(res, err);
+					});
 	        return _respond(res, 'Processing PR as Issue' + payload.issue.number);
 	    }
 		}, (err) => {
