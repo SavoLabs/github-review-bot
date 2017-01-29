@@ -1,11 +1,9 @@
 'use strict';
-var githubApi = require('./github'),
-	github = githubApi.service,
-	debug = require('debug')('reviewbot:bot'),
-
-	config = require('../config');
-
-
+const githubApi = require('./github');
+const github = githubApi.service;
+const debug = require('debug')('reviewbot:bot');
+const config = require('../config');
+const Promise = require('promise');
 
 function enforce(repo, reviewsNeeded, callback) {
 	var resultReviewsNeeded = reviewsNeeded;
@@ -154,11 +152,8 @@ function checkForLabel(prNumber, repo, pr, action, callback) {
  * @callback {checkForInstructionsCommentCb} callback
  */
 function _checkForInstructionsComment(prNumber, repo, callback) {
-	githubApi.issues.getComments(repo, prNumber, function(err, comments) {
+	githubApi.issues.getComments(repo, prNumber).then((comments) => {
 		var instructed = false;
-		if (err) {
-			return debug('commentInstructions: error while trying fetch comments: ', err);
-		}
 		for (var i = 0; i < comments.length; i++) {
 			instructed = (comments[i].body.slice(1, 30).trim() === config.instructionsComment.slice(1, 30).trim());
 			if (instructed) {
@@ -169,6 +164,8 @@ function _checkForInstructionsComment(prNumber, repo, callback) {
 		if (callback) {
 			callback(instructed);
 		}
+	}, (err) => {
+		return debug('commentInstructions: error while trying fetch comments: ', err);
 	});
 }
 /**
@@ -196,22 +193,16 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 		}
 		var date = Date.parse(lastCommit.commit.author.date);
 
-		githubApi.issues.getCommentsSince(repo, prNumber, date, function(err, comments) {
-			console.log(comments);
-			var lgtm = config.lgtmRegex,
-				approvedCount = 0,
-				approved,
-				needsWork, ngtm = config.needsWorkRegex;
-			if (err) {
-				console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
-				console.log(err);
-				return debug('checkForApprovalComments: Error while fetching coments for single PR: ', err);
-			}
-
-			var voteUsers = [],
-				whoWantMore = [],
-				shamed = false,
-				needsShame = false;
+		githubApi.issues.getCommentsSince(repo, prNumber, date).then((comments) => {
+			let lgtm = config.lgtmRegex;
+			let approvedCount = 0;
+			let approved;
+			let needsWork;
+			let ngtm = config.needsWorkRegex;
+			let voteUsers = [];
+			let whoWantMore = [];
+			let shamed = false;
+			let needsShame = false;
 			for (var i = 0; i < comments.length; ++i) {
 				var comment = comments[i];
 				console.log("processing index: " + i);
@@ -396,6 +387,10 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 					}
 				});
 			});
+		}, (err) => {
+			console.log('checkForApprovalComments: Error while fetching coments for single PR: ');
+			console.log(err);
+			return debug('checkForApprovalComments: Error while fetching coments for single PR: ', err);
 		});
 	});
 }

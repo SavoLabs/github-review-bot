@@ -1,64 +1,83 @@
 'use strict';
-var githubApi = require('./github-api'),
-	github = githubApi.service,
-	auth = require('./auth'),
-	debug = require('debug')('reviewbot:bot'),
-	config = require('../../../config');
+const githubApi = require('./github-api');
+const github = githubApi.service;
+const auth = require('./auth');
+const debug = require('debug')('reviewbot:bot');
+const config = require('../../../config');
+const Promise = require('promise');
 
-var _knownComments = [];
-function _getComments(err, res, callback) {
-		if(err){
-			return false;
-		}
+let _knownComments = [];
+let _getComments = (res) => {
+	return new Promise((resolve, reject) => {
 		_knownComments = _knownComments.concat(res);
-		if(github.hasNextPage(res)) {
-			github.getNextPage(res, function(err,res) { _getComments(err,res,callback) });
+		if (github.hasNextPage(res)) {
+			github.getNextPage(res, (err, res) => {
+				if (err) {
+					return reject(err);
+				}
+				_getComments(res).then((results) => {
+					return resolve(results);
+				}, (err) => {
+					return reject(err);
+				});
+			});
 		} else {
-			if(callback) {
-				callback(err,_knownComments);
-			}
+			return resolve(_knownComments);
 		}
-}
-
-function getComments(repo, number, callback ) {
-	_knownComments = [];
-	auth.authenticate();
-
-	github.issues.getComments({
-		repo: repo,
-		owner: config.organization,
-		number: number,
-		per_page: 100
-	}, function(err, res) {
-		_getComments(err, res, callback);
 	});
-}
+};
 
-function getCommentsSince(repo, number, date, callback) {
-	getComments(repo, number, function(err, comments) {
-		var filtered = comments.filter(function(c) {
-			var cdate = Date.parse(c.updated_at);
-			return cdate >= date ;
+let getComments = (repo, number) => {
+	return new Promise((resolve, reject) => {
+		_knownComments = [];
+		auth.authenticate();
+
+		github.issues.getComments({
+			repo: repo,
+			owner: config.organization,
+			number: number,
+			per_page: 100
+		}, (err, res) => {
+			if (err) {
+				return reject(err);
+			}
+			_getComments(res).then((results) => {
+				return resolve(results);
+			}, (err) => {
+				return reject(err);
+			});
 		});
-
-		callback(err,filtered);
 	});
-}
+};
 
-function getLabels(repo, number, callback) {
+let getCommentsSince = (repo, number, date) => {
+	return new Promise((resolve, reject) => {
+		getComments(repo, number).then((comments) => {
+			let filtered = comments.filter((c) => {
+				let cdate = Date.parse(c.updated_at);
+				return cdate >= date;
+			});
+			return resolve(filtered);
+		}, (err) => {
+			return reject(err);
+		});
+	});
+};
+
+let getLabels = (repo, number, callback) => {
 	auth.authenticate();
 	github.issues.getIssueLabels({
 		owner: config.organization,
 		repo: repo,
 		number: number
-	}, function(err,result) {
-		if(callback){
-			callback(err,result);
+	}, function(err, result) {
+		if (callback) {
+			callback(err, result);
 		}
 	});
 }
 
-function edit(repo, number, data, callback) {
+let edit = (repo, number, data, callback) => {
 	auth.authenticate();
 	github.issues.edit({
 		owner: config.organization,
@@ -74,7 +93,7 @@ function edit(repo, number, data, callback) {
 			callback(error, result);
 		}
 	});
-}
+};
 
 module.exports = {
 	getComments: getComments,
