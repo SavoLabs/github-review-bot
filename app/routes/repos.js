@@ -38,13 +38,15 @@ router.get('/', requireLoggedIn(), function(req, res) {
 	});
 });
 
-router.get('/:repo', requireLoggedIn(), function(req, res) {
-	var output = [];
-	github.repos.get(req.params.repo, function(result) {
+router.get('/:repo', requireLoggedIn(), (req, res) => {
+	let output = [];
+	github.repos.get(req.params.repo).then((result) => {
 		res.render('repo-edit', {
 			repo: result,
 			user: req.user
 		});
+	}, (err) => {
+		throw err;
 	});
 });
 

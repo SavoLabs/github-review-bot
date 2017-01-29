@@ -25,7 +25,7 @@ router.get('/', requireLoggedIn(), function(req, res) {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (allowed) {
 			var processedCount = 0;
-			github.repos.getAll(function(repos) {
+			github.repos.getAll().then((repos) => {
 				var managedList = [];
 				for (var x = 0; x < repos.length; ++x) {
 					var repo = repos[x];
@@ -70,9 +70,9 @@ router.get('/', requireLoggedIn(), function(req, res) {
 							_renderNonmanaged(req, res, managedList);
 						}
 					});
-
 				}
-
+			}, (err) => {
+				throw err;
 			});
 		} else {
 			console.log("not Authorized");
