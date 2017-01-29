@@ -6,6 +6,7 @@ const auth = require('./auth');
 const debug = require('debug')('reviewbot:bot');
 const config = require('../../../config');
 const Promise = require('promise');
+const async = require('async');
 
 const reviewStates = {
 	approved: "APPROVED",
@@ -39,7 +40,7 @@ let get = (prNumber, repo) => {
 			resolve([result]);
 		});
 	});
-}
+};
 
 
 /**
@@ -66,29 +67,7 @@ let getAll = (repo, callback) => {
 			return resolve(result);
 		});
 	});
-}
-
-let _knownCommits = [];
-
-let _getCommits = (res) => {
-	return new Promise((resolve, reject) => {
-		_knownCommits = _knownCommits.concat(res);
-		if (github.hasNextPage(res)) {
-			github.getNextPage(res, (err, res) => {
-				if (err) {
-					return reject(err);
-				}
-				_getCommits(res).then((results) => {
-					return resolve(results);
-				}, (err) => {
-					return reject(err);
-				})
-			});
-		} else {
-			return resolve(_knownCommits);
-		}
-	});
-}
+};
 
 let getCommits = (repo, prNumber) => {
 	return new Promise((resolve, reject) => {
@@ -98,14 +77,29 @@ let getCommits = (repo, prNumber) => {
 			repo: repo,
 			number: prNumber,
 			per_page: 100
-		}, (err, result) => {
-			if (err) {
+		}, (err, results) => {
+			if(err) {
 				return reject(err);
 			}
-			_getCommits(err, result).then((results) => {
-				return resolve(results);
-			}, (err) => {
-				return reject(err);
+			let currentResults = results;
+			async.whilst(()=> {
+				// if there are more pages
+				return github.hasNextPage(currentResults);
+			}, (next) => {
+				// each iteration
+				if(err) {
+					console.error(err);
+					return next(err);
+				}
+				currentResults = results;
+				next(null, results);
+			}, (err, results) => {
+				// done
+				if(err) {
+					reject(err);
+				} else {
+					resolve(results);
+				}
 			});
 		});
 	});
@@ -131,7 +125,7 @@ let getMostRecentCommit = (repo, prNumber) => {
 			return reject(err);
 		});
 	});
-}
+};
 
 let getFiles = (repo, number) => {
 	return new Promise((resolve, reject) => {
@@ -147,50 +141,43 @@ let getFiles = (repo, number) => {
 			return resolve(result);
 		});
 	});
-}
-
-
-let _knownReviews = [];
-let _getReviews = (res) => {
-	return new Promise((resolve, reject) => {
-		_knownReviews = _knownReviews.concat(res);
-		if (github.hasNextPage(res)) {
-			github.getNextPage(res, (err, res) => {
-				if(err) {
-					return reject(err);
-				}
-				return _getReviews(res).then((results) => {
-					return resolve(results);
-				}, (err) => {
-					return reject(err);
-				});
-			});
-		} else {
-			return resolve(_knownReviews);
-		}
-	});
 };
 
 let getAllReviews = (repo, number) => {
-	return new Promise(function(resolve, reject) {
-		_knownReviews = [];
+	return new Promise((resolve, reject) => {
 		auth.authenticate();
 		github.pullRequests.getReviews({
 			owner: config.organization,
 			repo: repo,
 			number: number,
 			per_page: 100
-		}, (err, res) => {
+		}, (err, results) => {
 			if (err) {
 				return reject(err);
 			}
-			return _getReviews(res).then((result) => {
-				return resolve(result);
-			}, (err) => {
-				console.error(err);
-				return reject(err);
+			let currentResults = results;
+			async.whilst(()=> {
+				// if there are more pages
+				return github.hasNextPage(currentResults);
+			}, (next) => {
+				// each iteration
+				github.getNextPage(currentResults, (err, results) => {
+					if(err) {
+						console.error(err);
+						return next(err);
+					}
+					currentResults = results;
+					next(null, results);
+				});
+			}, (err, results) => {
+				// done
+				if(err) {
+					reject(err);
+				} else {
+					resolve(results);
+				}
 			});
-		});
+		})
 	});
 };
 

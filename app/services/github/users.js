@@ -5,46 +5,46 @@ const auth = require('./auth');
 const debug = require('debug')('reviewbot:bot');
 const config = require('../../../config');
 const Promise = require('promise');
-
-var _knownUsers = [];
-let _getAllUsers = (res) => {
-	return new Promise((resolve, reject) => {
-		_knownUsers = _knownUsers.concat(res);
-		if (github.hasNextPage(res)) {
-			github.getNextPage(res, (err, res) => {
-				return _getAllUsers(res).then((result) => {
-					return resolve(result);
-				}, (err) => {
-					console.error(err);
-					return reject(err);
-				});
-			});
-		} else {
-			return resolve(_knownUsers);
-		}
-	});
-};
+const async = require('async');
 
 let getAll = (filter) => {
-	return new Promise(function(resolve, reject) {
+	return new Promise((resolve, reject) => {
 		auth.authenticate();
-		_knownUsers = [];
+		let allUsers = [];
 		github.orgs.getMembers({
 			org: config.organization,
-			filter: filter ? filter : 'all',
+			filter: filter? filter : 'all',
 			per_page: 100
-		}, function(err, res) {
-			if (err) {
+		}, (err, results) => {
+			if(err) {
 				return reject(err);
 			}
-			return _getAllUsers(res).then((results) => {
-				return resolve(results);
-			}, (err) => {
-				return reject(err);
+			let currentResults = results;
+			allUsers = allUsers.concat(results);
+			async.whilst(() => {
+				// if there are more pages
+				return github.hasNextPage(currentResults);
+			}, (next) => {
+				// each iteration
+				github.getNextPage(currentResults, (err, results) => {
+					if(err) {
+						console.error(err);
+						return next(err);
+					}
+					currentResults = results;
+					allUsers = allUsers.concat(allUsers);
+					next(null, results);
+				});
+			}, (err, results) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(allUsers);
+				}
 			});
 		});
 	});
-};
+}
 
 module.exports = {
 	getAll: getAll

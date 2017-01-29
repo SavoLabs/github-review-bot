@@ -5,50 +5,43 @@ const auth = require('./auth');
 const debug = require('debug')('reviewbot:bot');
 const config = require('../../../config');
 const Promise = require('promise');
-
-let _knownComments = [];
-let _getComments = (res) => {
-	return new Promise((resolve, reject) => {
-		_knownComments = _knownComments.concat(res);
-		if (github.hasNextPage(res)) {
-			github.getNextPage(res, (err, res) => {
-				if (err) {
-					return reject(err);
-				}
-				_getComments(res).then((results) => {
-					return resolve(results);
-				}, (err) => {
-					return reject(err);
-				});
-			});
-		} else {
-			return resolve(_knownComments);
-		}
-	});
-};
+const async = require('async');
 
 let getComments = (repo, number) => {
 	return new Promise((resolve, reject) => {
-		_knownComments = [];
 		auth.authenticate();
-
 		github.issues.getComments({
-			repo: repo,
 			owner: config.organization,
+			repo: repo,
 			number: number,
 			per_page: 100
-		}, (err, res) => {
-			if (err) {
+		}, (err, results) => {
+			if(err) {
 				return reject(err);
 			}
-			_getComments(res).then((results) => {
-				return resolve(results);
-			}, (err) => {
-				return reject(err);
+			let currentResults = results;
+			async.whilst(()=> {
+				// if there are more pages
+				return github.hasNextPage(currentResults);
+			}, (next) => {
+				// each iteration
+				if(err) {
+					console.error(err);
+					return next(err);
+				}
+				currentResults = results;
+				next(null, results);
+			}, (err, results) => {
+				// done
+				if(err) {
+					reject(err);
+				} else {
+					resolve(results);
+				}
 			});
 		});
 	});
-};
+}
 
 let getCommentsSince = (repo, number, date) => {
 	return new Promise((resolve, reject) => {

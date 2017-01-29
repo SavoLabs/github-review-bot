@@ -7,7 +7,7 @@ const router = express.Router();
 const loginRoute = '/login';
 const Promise = require('promise');
 
-var requireLoggedIn = function() {
+var requireLoggedIn = () => {
 	return require('connect-ensure-login').ensureLoggedIn(loginRoute);
 };
 
@@ -18,18 +18,20 @@ var requireLoggedIn = function() {
 //   });
 
 /* GET home page. */
-router.get('/', requireLoggedIn(), function(req, res) {
+router.get('/', requireLoggedIn(), (req, res) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (allowed) {
-			github.repos.getAll(function(result) {
+			github.repos.getAll().then((result) => {
 				res.render('repos', {
 					repos: result,
 					user: req.user
 				});
+			}, (err) => {
+				throw err;
 			});
 		} else {
 			console.log("not Authorized");
-			var err = new Error('Not Authorized.');
+			let err = new Error('Not Authorized.');
 			err.status = 403;
 			throw err;
 		}
@@ -50,10 +52,10 @@ router.get('/:repo', requireLoggedIn(), (req, res) => {
 	});
 });
 
-router.post('/enforce/:repo', requireLoggedIn(), function(req, res) {
+router.post('/enforce/:repo', requireLoggedIn(), (req, res) => {
 	console.log("attempting to enforce: " + req.params.repo);
 	var reviewsNeeded = parseInt(req.body.reviewsNeeded || config.reviewsNeeded, 0);
-	bot.enforce(req.params.repo, reviewsNeeded, function(err, result) {
+	bot.enforce(req.params.repo, reviewsNeeded, (err, result) => {
 		console.log("err: " + err);
 		console.log("result: " + result);
 		if (!err) {
@@ -62,8 +64,8 @@ router.post('/enforce/:repo', requireLoggedIn(), function(req, res) {
 	});
 });
 
-router.get('/unenforce/:repo', requireLoggedIn(), function(req, res) {
-	bot.unenforce(req.params.repo, function(err, result) {
+router.get('/unenforce/:repo', requireLoggedIn(), (req, res) => {
+	bot.unenforce(req.params.repo, (err, result) => {
 		if (!err) {
 			res.redirect('/repos/' + req.params.repo);
 		} else {
@@ -72,10 +74,10 @@ router.get('/unenforce/:repo', requireLoggedIn(), function(req, res) {
 	});
 });
 
-router.get('/setup', function(req, res) {
+router.get('/setup', (req, res) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (allowed) {
-			github.repos.getAll(function(result) {
+			github.repos.getAll().then((result) => {
 				var count = 0;
 				for (var i = 0; i < result.length; ++i) {
 					var repo = result[i];
@@ -90,9 +92,11 @@ router.get('/setup', function(req, res) {
 						}
 					});
 				}
+			}, (err) => {
+				throw err;
 			});
 		} else {
-			var err = new Error('Not Authorized.');
+			let err = new Error('Not Authorized.');
 			err.status = 403;
 			throw err;
 		}
