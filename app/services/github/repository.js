@@ -46,7 +46,7 @@ let _getRepos = (res) => {
 	});
 };
 
-function getAll() {
+let getAll = () => {
 	return new Promise(function(resolve, reject) {
 		_knownRepos = [];
 		auth.authenticate();
@@ -66,7 +66,7 @@ function getAll() {
 			});
 		});
 	});
-}
+};
 
 
 module.exports = {
