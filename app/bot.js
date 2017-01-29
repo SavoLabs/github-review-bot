@@ -274,7 +274,7 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 			// process the reactions on the PR
 			// currently, reactions do not trigger a webhook event
 			// so it does not trigger a processing of the PR
-			githubApi.reactions.getForPullRequest(repo, prNumber, function(xerr, res) {
+			githubApi.reactions.getForPullRequest(repo, prNumber).then((res) => {
 
 				// TODO: filter these by the date too
 				for (var i = 0; i < res.length; ++i) {
@@ -387,8 +387,12 @@ function checkForApprovalComments(prNumber, repo, pr, callback) {
 				}, (err) => {
 					console.log('checkForApprovalComments: Error while fetching reviews for single PR: ');
 					console.log(err);
-					return debug('checkForApprovalComments: Error while fetching coments for single PR: ', err);
+					return debug('checkForApprovalComments: Error while fetching reviews for single PR: ', err);
 				});
+			}, (err) => {
+				console.log('checkForApprovalComments: Error while fetching reactions for single PR: ');
+				console.log(err);
+				return debug('checkForApprovalComments: Error while fetching reactions for single PR: ', err);
 			});
 		}, (err) => {
 			console.log('checkForApprovalComments: Error while fetching coments for single PR: ');

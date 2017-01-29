@@ -1,28 +1,28 @@
 'use strict';
-var githubApi = require('./github-api'),
-	github = githubApi.service,
-	auth = require('./auth'),
-	debug = require('debug')('reviewbot:bot'),
-	config = require('../../../config');
+const githubApi = require('./github-api');
+const github = githubApi.service;
+const auth = require('./auth');
+const debug = require('debug')('reviewbot:bot');
+const config = require('../../../config');
+const Promise = require('promise');
+let getForPullRequest = (repo, prNumber) => {
+	return new Promise((resolve, reject) => {
 
-function getForPullRequest(repo, prNumber, callback) {
 	if(!config.enableReactions) {
-		callback(null,[]);
-		return;
+		return resolve([]);
 	}
 	github.reactions.getForIssue({
 		owner: config.organization,
 		repo: repo,
 		number: prNumber
-	}, function(err,res) {
+	}, (err,res) => {
 		if(err) {
 			console.error(err);
+			return reject(err);
 		}
-
-		if(callback) {
-			callback(err,res);
-		}
+		return resolve(res);
 	});
+});
 }
 
 module.exports = {
