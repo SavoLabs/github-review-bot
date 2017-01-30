@@ -1,80 +1,107 @@
 'use strict';
-var githubApi = require('./github-api'),
-	github = githubApi.service,
-	auth = require('./auth'),
-	debug = require('debug')('reviewbot:bot'),
-	config = require('../../../config');
+const githubApi = require('./github-api');
+const github = githubApi.service;
+const auth = require('./auth');
+const debug = require('debug')('reviewbot:bot');
+const config = require('../../../config');
+const Promise = require('promise');
+const async = require('async');
 
-var _knownComments = [];
-function _getComments(err, res, callback) {
-		if(err){
-			return false;
-		}
-		_knownComments = _knownComments.concat(res);
-		if(github.hasNextPage(res)) {
-			github.getNextPage(res, function(err,res) { _getComments(err,res,callback) });
-		} else {
-			if(callback) {
-				callback(err,_knownComments);
+let getComments = (repo, number) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		let allComments = [];
+		github.issues.getComments({
+			owner: config.organization,
+			repo: repo,
+			number: number,
+			per_page: 100
+		}, (err, results) => {
+			if(err) {
+				return reject(err);
 			}
-		}
-}
-
-function getComments(repo, number, callback ) {
-	_knownComments = [];
-	auth.authenticate();
-
-	github.issues.getComments({
-		repo: repo,
-		owner: config.organization,
-		number: number,
-		per_page: 100
-	}, function(err, res) {
-		_getComments(err, res, callback);
-	});
-}
-
-function getCommentsSince(repo, number, date, callback) {
-	getComments(repo, number, function(err, comments) {
-		var filtered = comments.filter(function(c) {
-			var cdate = Date.parse(c.updated_at);
-			return cdate >= date ;
+			let currentResults = results;
+			allComments = allComments.concat(results);
+			async.whilst(()=> {
+				// if there are more pages
+				return github.hasNextPage(currentResults);
+			}, (next) => {
+				// each iteration
+				if(err) {
+					console.error(err);
+					return next(err);
+				}
+				currentResults = results;
+				allComments = allComments.concat(results);
+				next(null, results);
+			}, (err, results) => {
+				// done
+				if(err) {
+					reject(err);
+				} else {
+					resolve(allComments);
+				}
+			});
 		});
-
-		callback(err,filtered);
 	});
 }
 
-function getLabels(repo, number, callback) {
-	auth.authenticate();
-	github.issues.getIssueLabels({
-		owner: config.organization,
-		repo: repo,
-		number: number
-	}, function(err,result) {
-		if(callback){
-			callback(err,result);
+let getCommentsSince = (repo, number, date) => {
+	return new Promise((resolve, reject) => {
+		try {
+			getComments(repo, number).then((comments) => {
+				let filtered = comments.filter((c) => {
+					let cdate = Date.parse(c.updated_at);
+					return cdate >= date;
+				});
+				return resolve(filtered);
+			}, (err) => {
+				return reject(err);
+			});
+		} catch (e) {
+			return reject(e);
 		}
 	});
-}
+};
 
-function edit(repo, number, data, callback) {
-	auth.authenticate();
-	github.issues.edit({
-		owner: config.organization,
-		repo: repo,
-		number: number,
-		labels: data.labels ? data.labels : undefined,
-		title: data.title ? data.title : undefined,
-		body: data.body ? data.body : undefined,
-		assignee: data.assignee ? data.assignee : undefined,
-		assignees: data.assignees ? data.assignees : undefined,
-	}, function(error, result) {
-		if (callback) {
-			callback(error, result);
-		}
+let getLabels = (repo, number) => {
+	return new Promise(function(resolve, reject) {
+		auth.authenticate();
+		github.issues.getIssueLabels({
+			owner: config.organization,
+			repo: repo,
+			number: number
+		}, function(err, result) {
+			if(err) {
+				reject(err);
+			} else {
+				resolve(result);
+			}
+		});
 	});
 }
+
+let edit = (repo, number, data) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		github.issues.edit({
+			owner: config.organization,
+			repo: repo,
+			number: number,
+			labels: data.labels ? data.labels : undefined,
+			title: data.title ? data.title : undefined,
+			body: data.body ? data.body : undefined,
+			assignee: data.assignee ? data.assignee : undefined,
+			assignees: data.assignees ? data.assignees : undefined,
+		}, function(err, result) {
+			if(err) {
+				reject(err)
+			} else {
+				resolve(result);
+			}
+		});
+	});
+};
 
 module.exports = {
 	getComments: getComments,
