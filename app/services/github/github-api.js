@@ -1,7 +1,7 @@
 'use strict';
-var GitHubApi = require('github'),
-	debug = require('debug')('reviewbot:githubapi'),
-	config = require('../../../config');
+const GitHubApi = require('github');
+const debug = require('debug')('reviewbot:githubapi');
+const config = require('../../../config');
 
 var github = new GitHubApi({
   debug: false,

@@ -1,26 +1,26 @@
 'use strict';
 
-var express = require('express');
-var passport = require('passport');
-var Strategy = require('passport-github').Strategy;
+const express = require('express');
+const passport = require('passport');
+const Strategy = require('passport-github').Strategy;
 
-var path = require('path');
+const path = require('path');
 
-var logger = require('morgan'),
-		xhub = require('express-x-hub'),
-    bodyParser = require('body-parser'),
-    config = require('../config'),
-    routes = require('./routes/index'),
-		pullrequest = require('./routes/pullrequest'),
-		repository = require('./routes/repository'),
-		comment = require('./routes/comment'),
-    repos = require('./routes/repos'),
-    audit = require('./routes/audit'),
-    login = require('./routes/login'),
-		managed = require('./routes/managed'),
-		nonmanaged = require('./routes/nonmanaged'),
-    session = require('express-session'),
-    app = express();
+const logger = require('morgan');
+const xhub = require('express-x-hub');
+const bodyParser = require('body-parser');
+const config = require('../config');
+const routes = require('./routes/index');
+const pullrequest = require('./routes/pullrequest');
+const repository = require('./routes/repository');
+const comment = require('./routes/comment');
+const repos = require('./routes/repos');
+const audit = require('./routes/audit');
+const login = require('./routes/login');
+const managed = require('./routes/managed');
+const nonmanaged = require('./routes/nonmanaged');
+const session = require('express-session');
+const app = express();
 
 if(config.authClientID && config.authClientSecret) {
   passport.use(new Strategy({

@@ -1,35 +1,48 @@
 'use strict';
-var githubApi = require('./github-api'),
-	github = githubApi.service,
-	auth = require('./auth'),
-	debug = require('debug')('reviewbot:bot'),
-	config = require('../../../config');
+const githubApi = require('./github-api');
+const github = githubApi.service;
+const auth = require('./auth');
+const debug = require('debug')('reviewbot:bot');
+const config = require('../../../config');
+const Promise = require('promise');
+const async = require('async');
 
-var _knownUsers = [];
-function _getAllUsers ( err, res, callback ) {
-	if(err){
-		return false;
-	}
-	_knownUsers = _knownUsers.concat(res);
-	if(github.hasNextPage(res)) {
-		github.getNextPage(res, function(err,res) { _getAllUsers(err,res,callback) });
-	} else {
-		if(callback) {
-			callback(err,_knownUsers);
-		}
-	}
-}
-
-function getAll(filter, callback) {
-	auth.authenticate();
-	_knownUsers = [];
-
-	github.orgs.getMembers({
-		org: config.organization,
-		filter: filter ? filter : 'all',
-		per_page: 100
-	}, function(err,res) {
-		_getAllUsers(err,res, callback);
+let getAll = (filter) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		let allUsers = [];
+		github.orgs.getMembers({
+			org: config.organization,
+			filter: filter? filter : 'all',
+			per_page: 100
+		}, (err, results) => {
+			if(err) {
+				return reject(err);
+			}
+			let currentResults = results;
+			allUsers = allUsers.concat(results);
+			async.whilst(() => {
+				// if there are more pages
+				return github.hasNextPage(currentResults);
+			}, (next) => {
+				// each iteration
+				github.getNextPage(currentResults, (err, results) => {
+					if(err) {
+						console.error(err);
+						return next(err);
+					}
+					currentResults = results;
+					allUsers = allUsers.concat(allUsers);
+					next(null, results);
+				});
+			}, (err, results) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(allUsers);
+				}
+			});
+		});
 	});
 }
 

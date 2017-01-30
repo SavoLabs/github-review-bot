@@ -1,10 +1,10 @@
 'use strict';
-var githubApi = require('./github-api'),
-	github = githubApi.service,
-	auth = require('./auth'),
-	debug = require('debug')('reviewbot:bot'),
-	config = require('../../../config');
-
+const githubApi = require('./github-api');
+const github = githubApi.service;
+const auth = require('./auth');
+const debug = require('debug')('reviewbot:bot');
+const config = require('../../../config');
+const Promise = require('promise');
 
 /**
  * Post a comment to an issue
@@ -12,26 +12,27 @@ var githubApi = require('./github-api'),
  * @param {string} comment - Comment to post
  * @callback {postCommentCb} callback
  */
-function postComment(number, repo, comment, callback) {
-	/**
-	 * @callback postCommentCb
-	 * @param {Object} result - Result returned from GitHub
-	 */
-	auth.authenticate();
-	github.issues.createComment({
-		owner: config.organization,
-		repo: repo,
-		number: number,
-		body: comment
-	}, function(error, result) {
-		if (error) {
-			console.log('postComment: Error while trying to post instructions:');
-			console.log(error);
-			return debug('postComment: Error while trying to post instructions:', error);
-		}
-		if (callback) {
-			callback(result);
-		}
+let postComment = (number, repo, comment) => {
+	return new Promise(function(resolve, reject) {
+		/**
+		 * @callback postCommentCb
+		 * @param {Object} result - Result returned from GitHub
+		 */
+		auth.authenticate();
+		github.issues.createComment({
+			owner: config.organization,
+			repo: repo,
+			number: number,
+			body: comment
+		}, (err, result) => {
+			if (err) {
+				console.log('postComment: Error while trying to post instructions:');
+				console.log(err);
+				debug('postComment: Error while trying to post instructions:', err);
+				reject(error);
+			}
+			resolve(result);
+		});
 	});
 }
 
