@@ -10,9 +10,7 @@ const debug = require('debug')('reviewbot:repository');
 const router = express.Router();
 const Promise = require('promise');
 
-router.post('/', _processRepositoryEvent);
-
-function _processRepositoryEvent(req, res) {
+let _processRepositoryEvent = (req, res, next) => {
 	githubApi.auth.isXHubValid(req).then((valid) => {
 		if (!valid) {
 			console.log('XHub signature did not match expected.');
@@ -57,14 +55,14 @@ function _processRepositoryEvent(req, res) {
 	}, (err) => {
 		throw err;
 	});
-}
+};
 
 /**
  * Respond using a given Express res object
  * @param {Object} res - Express res object
  * @param {string|string[]} message - Either a message or an array filled with messages
  */
-function _respond(res, message) {
+let _respond = (res, message) => {
 	if (res && message) {
 		if (message.isArray) {
 			return res.json({
@@ -78,5 +76,7 @@ function _respond(res, message) {
 	}
 }
 
+
+router.post('/', _processRepositoryEvent);
 
 module.exports = router;

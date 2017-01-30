@@ -10,7 +10,7 @@ const Promise = require('promise');
  * @param {Object} res - Express res object
  * @param {string|string[]} message - Either a message or an array filled with messages
  */
-function _respond(res, message) {
+let _respond = (res, message) => {
 	if (res && message) {
 		if (message.isArray) {
 			return res.json({

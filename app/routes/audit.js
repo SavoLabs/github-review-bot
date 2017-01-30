@@ -13,7 +13,7 @@ let requireLoggedIn = () => {
 };
 
 /* GET home page. */
-router.get('/', requireLoggedIn(), function(req, res, next) {
+router.get('/', requireLoggedIn(), (req, res, next) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			console.log("not Authorized");

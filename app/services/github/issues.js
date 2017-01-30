@@ -10,6 +10,7 @@ const async = require('async');
 let getComments = (repo, number) => {
 	return new Promise((resolve, reject) => {
 		auth.authenticate();
+		let allComments = [];
 		github.issues.getComments({
 			owner: config.organization,
 			repo: repo,
@@ -20,6 +21,7 @@ let getComments = (repo, number) => {
 				return reject(err);
 			}
 			let currentResults = results;
+			allComments = allComments.concat(results);
 			async.whilst(()=> {
 				// if there are more pages
 				return github.hasNextPage(currentResults);
@@ -30,13 +32,14 @@ let getComments = (repo, number) => {
 					return next(err);
 				}
 				currentResults = results;
+				allComments = allComments.concat(results);
 				next(null, results);
 			}, (err, results) => {
 				// done
 				if(err) {
 					reject(err);
 				} else {
-					resolve(results);
+					resolve(allComments);
 				}
 			});
 		});
@@ -45,15 +48,19 @@ let getComments = (repo, number) => {
 
 let getCommentsSince = (repo, number, date) => {
 	return new Promise((resolve, reject) => {
-		getComments(repo, number).then((comments) => {
-			let filtered = comments.filter((c) => {
-				let cdate = Date.parse(c.updated_at);
-				return cdate >= date;
+		try {
+			getComments(repo, number).then((comments) => {
+				let filtered = comments.filter((c) => {
+					let cdate = Date.parse(c.updated_at);
+					return cdate >= date;
+				});
+				return resolve(filtered);
+			}, (err) => {
+				return reject(err);
 			});
-			return resolve(filtered);
-		}, (err) => {
-			return reject(err);
-		});
+		} catch (e) {
+			return reject(e);
+		}
 	});
 };
 
@@ -68,7 +75,7 @@ let getLabels = (repo, number) => {
 			if(err) {
 				reject(err);
 			} else {
-				resolve(results);
+				resolve(result);
 			}
 		});
 	});

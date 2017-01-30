@@ -72,33 +72,36 @@ let getAll = (repo, callback) => {
 let getCommits = (repo, prNumber) => {
 	return new Promise((resolve, reject) => {
 		auth.authenticate();
+		let allComments = [];
 		github.pullRequests.getCommits({
 			owner: config.organization,
 			repo: repo,
 			number: prNumber,
 			per_page: 100
 		}, (err, results) => {
-			if(err) {
+			if (err) {
 				return reject(err);
 			}
 			let currentResults = results;
-			async.whilst(()=> {
+			allComments = allComments.concat(results);
+			async.whilst(() => {
 				// if there are more pages
 				return github.hasNextPage(currentResults);
 			}, (next) => {
 				// each iteration
-				if(err) {
+				if (err) {
 					console.error(err);
 					return next(err);
 				}
 				currentResults = results;
+				allComments = allComments.concat(results);
 				next(null, results);
 			}, (err, results) => {
 				// done
-				if(err) {
+				if (err) {
 					reject(err);
 				} else {
-					resolve(results);
+					resolve(allComments);
 				}
 			});
 		});
@@ -107,23 +110,27 @@ let getCommits = (repo, prNumber) => {
 
 let getMostRecentCommit = (repo, prNumber) => {
 	return new Promise((resolve, reject) => {
-		getCommits(repo, prNumber).then((result) => {
-			var recentDate = new Date(1970, 0, 1, 0, 0, 0);
-			var recent = null;
-			for (var i = 0; i < result.length; ++i) {
-				var c = result[i];
-				if (c.commit && c.commit.author && c.commit.author.date) {
-					var tdate = Date.parse(c.commit.author.date);
-					if (tdate > recentDate) {
-						recent = c;
-						recentDate = tdate;
+		try {
+			getCommits(repo, prNumber).then((result) => {
+				var recentDate = new Date(1970, 0, 1, 0, 0, 0);
+				var recent = null;
+				for (var i = 0; i < result.length; ++i) {
+					var c = result[i];
+					if (c.commit && c.commit.author && c.commit.author.date) {
+						var tdate = Date.parse(c.commit.author.date);
+						if (tdate > recentDate) {
+							recent = c;
+							recentDate = tdate;
+						}
 					}
 				}
-			}
-			return resolve(recent);
-		}, (err) => {
-			return reject(err);
-		});
+				return resolve(recent);
+			}, (err) => {
+				return reject(err);
+			});
+		} catch (e) {
+			return reject(e);
+		}
 	});
 };
 
@@ -135,7 +142,7 @@ let getFiles = (repo, number) => {
 			repo: repo,
 			number: number
 		}, function(err, result) {
-			if(err) {
+			if (err) {
 				return reject(err);
 			}
 			return resolve(result);
@@ -146,6 +153,7 @@ let getFiles = (repo, number) => {
 let getAllReviews = (repo, number) => {
 	return new Promise((resolve, reject) => {
 		auth.authenticate();
+		let allReviews = [];
 		github.pullRequests.getReviews({
 			owner: config.organization,
 			repo: repo,
@@ -156,25 +164,27 @@ let getAllReviews = (repo, number) => {
 				return reject(err);
 			}
 			let currentResults = results;
-			async.whilst(()=> {
+			allReviews = allReviews.concat(results);
+			async.whilst(() => {
 				// if there are more pages
 				return github.hasNextPage(currentResults);
 			}, (next) => {
 				// each iteration
 				github.getNextPage(currentResults, (err, results) => {
-					if(err) {
+					if (err) {
 						console.error(err);
 						return next(err);
 					}
 					currentResults = results;
+					allReviews = allReviews.concat(results);
 					next(null, results);
 				});
 			}, (err, results) => {
 				// done
-				if(err) {
+				if (err) {
 					reject(err);
 				} else {
-					resolve(results);
+					resolve(allReviews);
 				}
 			});
 		})
