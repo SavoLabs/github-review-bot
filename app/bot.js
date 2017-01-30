@@ -209,7 +209,6 @@ let checkForApprovalComments = (prNumber, repo, pr) => {
 
 		// we get the commits for the PR, so we can get the date of the most recent commit.
 		// any votes before this date, will be ignored.
-		console.log("before: checkForApprovalComments->getMostRecentCommit");
 		githubApi.pullrequests.getMostRecentCommit(repo, prNumber).then((lastCommit) => {
 			if (!lastCommit) {
 				console.error('checkForApprovalComments->getMostRecentCommit: Unable to get the most recent commit.');
@@ -219,7 +218,6 @@ let checkForApprovalComments = (prNumber, repo, pr) => {
 
 			let date = Date.parse(lastCommit.commit.author.date);
 
-			console.log("before: checkForApprovalComments->getCommentsSince");
 			githubApi.issues.getCommentsSince(repo, prNumber, date).then((comments) => {
 				let lgtm = config.lgtmRegex;
 				let approvedCount = 0;
@@ -230,11 +228,9 @@ let checkForApprovalComments = (prNumber, repo, pr) => {
 				let whoWantMore = [];
 				let shamed = false;
 				let needsShame = false;
-				console.log("each comment: ");
 				async.each(comments, (comment, next) => {
 					let who = comment.user.login;
 					if(comment.body) {
-						console.log("processing comment: " + comment.id + " : " + comment.user.login + " : " + comment.body);
 						let rbody = comment.body.trim();
 						// skip all from bot
 						if (who.trim() === config.username.trim()) {
@@ -307,10 +303,7 @@ let checkForApprovalComments = (prNumber, repo, pr) => {
 					// process the reactions on the PR
 					// currently, reactions do not trigger a webhook event
 					// so it does not trigger a processing of the PR
-					console.log("before: checkForApprovalComments->reactions.getForPullRequest");
 					githubApi.reactions.getForPullRequest(repo, prNumber).then((reactions) => {
-						console.log("process reactions");
-						console.log(reactions);
 						// TODO: filter these by the date too
 						// TODO: async each
 						for (let i = 0; i < reactions.length; ++i) {
@@ -345,12 +338,7 @@ let checkForApprovalComments = (prNumber, repo, pr) => {
 								}
 							}
 						}
-
-						console.log("before: checkForApprovalComments->pullrequests.getAllReviews");
 						githubApi.pullrequests.getAllReviews(repo, prNumber).then((reviews) => {
-							console.log("process reviews");
-							console.log(reviews);
-
 							// TODO: async each
 							for (var i = 0; i < reviews.length; i++) {
 								let review = reviews[i];
