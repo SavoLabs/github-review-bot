@@ -64,6 +64,42 @@ let getCommentsSince = (repo, number, date) => {
 	});
 };
 
+let createLabel = (repo, name, color) => {
+	return new Promise(function(resolve, reject) {
+		auth.authenticate();
+		github.issues.createLabel({
+			owner: config.github.organization,
+			user: config.github.organization,
+			repo: repo,
+			name: name,
+			color: color
+		}, function(err, result) {
+			if(err) {
+				return reject(err);
+			}
+			return resolve(result);
+		});
+	});
+};
+
+let createLabels = (repo, labels ) => {
+	let errs = [];
+	let results = [];
+	async.each(labels, (item, next) => {
+		createLabel(repo,labels[x].name, labels[x].color).then((result) => {
+			results.push(result);
+			return next();
+		}, (err) => {
+			return next(err);
+		}
+	}, (err) => { // done
+		if(err) {
+			return reject(err);
+		}
+		return resolve(results);
+	});
+};
+
 let getLabels = (repo, number) => {
 	return new Promise(function(resolve, reject) {
 		auth.authenticate();
@@ -107,5 +143,7 @@ module.exports = {
 	getComments: getComments,
 	getCommentsSince: getCommentsSince,
 	getLabels: getLabels,
+	createLabel: createLabel,
+	createLabels: createLabels,
 	edit: edit
 };

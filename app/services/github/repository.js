@@ -63,8 +63,27 @@ let getAll = () => {
 	});
 }
 
+let addTeam = (teamId, repo, permission) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		github.orgs.addTeamRepo({
+			org: config.github.organization,
+			repo: repo,
+			id: teamId,
+			permission: permission || 'pull'
+		}, function(err, result) {
+			if(err){
+				console.error(err);
+				return reject(err);
+			}
+			return resolve(result);
+		});
+	});
+};
+
 
 module.exports = {
 	getAll: getAll,
-	get: get
+	get: get,
+	addTeam: addTeam
 };

@@ -1,0 +1,21 @@
+---
+DockerInstance:
+  Type: AWS::EC2::Instance
+  Properties:
+    InstanceType: t2.micro
+    ImageId:
+      Fn::FindInMap:
+      - RegionMap
+      - Ref: AWS::Region
+      - '64'
+    KeyName:
+      Ref: KeyName
+    SubnetId:
+      Ref: SubnetId
+    SecurityGroupIds:
+    - Ref: SecurityGroupId
+    Tags:
+    - Key: Name
+      Value: DockerHost
+    UserData:
+      Fn::Base64: "#include https://get.docker.io"
