@@ -1,15 +1,11 @@
 'use strict';
 const express = require('express');
-const bot = require('../bot');
-const github = require('../github');
+const bot = require('../../bot');
+const github = require('../../github');
 const debug = require('debug')('reviewbot:comment');
 const router = express.Router();
 const Promise = require('promise');
-/**
- * Respond using a given Express res object
- * @param {Object} res - Express res object
- * @param {string|string[]} message - Either a message or an array filled with messages
- */
+
 let _respond = (res, message) => {
 	if (res && message) {
 		if (message.isArray) {
@@ -52,7 +48,7 @@ router.post('/', function(req, res) {
 	github.comments.postComment(id, comment).then((result) => {
 		return _respond(res, 'Sucessfully posted comment');
 	}, (err) => {
-		throw err;
+		return _respond(res, err.message);
 	});
 });
 

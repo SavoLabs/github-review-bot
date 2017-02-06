@@ -91,7 +91,7 @@ let createLabels = (repo, labels ) => {
 			return next();
 		}, (err) => {
 			return next(err);
-		}
+		});
 	}, (err) => { // done
 		if(err) {
 			return reject(err);
@@ -129,15 +129,35 @@ let edit = (repo, number, data) => {
 			body: data.body ? data.body : undefined,
 			assignee: data.assignee ? data.assignee : undefined,
 			assignees: data.assignees ? data.assignees : undefined,
-		}, function(err, result) {
+		}, (err, result) => {
 			if(err) {
-				reject(err)
+				reject(err);
 			} else {
 				resolve(result);
 			}
 		});
 	});
 };
+
+let get = (repo, number) => {
+	return new Promise((resolve, reject) => {
+		auth.authenticate();
+		github.issues.get({
+			owner: config.organization,
+			repo: repo,
+			number: number
+		}, (err, result) => {
+			if(err) {
+				return reject(err);
+			}
+			if(result){
+				return resolve(result)
+			} else {
+				return reject(`Unable to find issue #${number} in repository '${repo}'`);
+			}
+		})
+	});
+}
 
 module.exports = {
 	getComments: getComments,

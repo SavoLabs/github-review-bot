@@ -40,7 +40,8 @@ const Promise = require('promise');
 
 	let isXHubValid = (req) => {
 		return new Promise(function(resolve, reject) {
-			if(!req.isXHub || config.webhookSecret == '' || config.webhookSecret == null) {
+			if(!req.isXHub || config.webhookSecret == '' || config.webhookSecret == null ||
+				(( process.env.DEBUG_NO_XHUB || req.get("X-NO-XHUB") === 'true') && /^localhost/gi.test(req.get('host')))) {
 				resolve(true);
 			}
 			console.log("xhub validated: " + req.isXHubValid());

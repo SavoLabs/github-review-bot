@@ -1,5 +1,7 @@
 'use strict';
 
+// NOTE: THIS FILE IS DEPRECIATED
+
 var config = {};
 
 // include a `.env` file in the root

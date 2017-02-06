@@ -3,9 +3,9 @@
 // allows the repo to be hooked to the bot when it is created
 
 const express = require('express');
-const bot = require('../bot');
-const githubApi = require('../github');
-const config = require('../../config');
+const bot = require('../../bot');
+const githubApi = require('../../github');
+const config = require('./repository.config');
 const debug = require('debug')('reviewbot:repository');
 const router = express.Router();
 const Promise = require('promise');

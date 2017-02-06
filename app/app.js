@@ -10,15 +10,7 @@ const logger = require('morgan');
 const xhub = require('express-x-hub');
 const bodyParser = require('body-parser');
 const config = require('../config');
-const routes = require('./routes/index');
-const pullrequest = require('./routes/pullrequest');
-const repository = require('./routes/repository');
-const comment = require('./routes/comment');
-const repos = require('./routes/repos');
-const audit = require('./routes/audit');
-const login = require('./routes/login');
-const managed = require('./routes/managed');
-const nonmanaged = require('./routes/nonmanaged');
+
 const session = require('express-session');
 const app = express();
 
@@ -61,18 +53,9 @@ if(config.authClientID && config.authClientSecret) {
   app.use(passport.initialize());
   app.use(passport.session());
 }
-app.use('/', routes);
-app.use('/pullrequest', pullrequest);
-app.use('/repository', repository);
-app.use('/comment', comment);
-app.use('/managed', managed);
-app.use('/nonmanaged', nonmanaged);
-app.use('/repos', repos);
-app.use('/audit', audit);
 
-if(config.authClientID && config.authClientSecret) {
-  app.use('/login', login);
-}
+require('./routes')(app, passport);
+
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {

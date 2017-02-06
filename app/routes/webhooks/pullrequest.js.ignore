@@ -1,8 +1,8 @@
 'use strict';
 const express = require('express');
-const bot = require('../bot');
-const githubApi = require('../github');
-const config = require('../../config');
+const bot = require('../../bot');
+const githubApi = require('../../github');
+const config = require('./pullrequest.config');
 const debug = require('debug')('reviewbot:pullrequest');
 const router = express.Router();
 const Promise = require('promise');
