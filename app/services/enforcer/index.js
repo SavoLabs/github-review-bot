@@ -14,7 +14,7 @@ let enforce = (repo, reviewsNeeded) => {
 		}
 		let route = _getRoute('webhooks/pullrequest');
 		var cbUrl = `${config.botUrlRoot}${route}/${resultReviewsNeeded.toString()}`;
-		githubApi.webhooks.createWebHook(repo, cbUrl, '*').then((result) => {
+		githubApi.webhooks.createWebHook(repo, cbUrl, ['*']).then((result) => {
 			resolve(result);
 		}, (err) => {
 			reject(err);
@@ -44,3 +44,24 @@ let unenforce = (repo) => {
 		});
 	});
 };
+
+
+let _getRoute = (section) => {
+	let route;
+	if (!config[section]) {
+		try {
+			let prHookConfig = require(`./routes/${section}.config`);
+			route = typeof prHookConfig[section].route === typeof [] ? prHookConfig[section].route[0] : prHookConfig[section].route;
+		} catch (e) {
+			return "";
+		}
+	} else {
+		route = typeof config[section].route === typeof [] ? config[section].route[0] : config[section].route;
+	}
+	return route;
+};
+
+module.exports = {
+	enforce: enforce,
+	unenforce: unenforce
+}

@@ -1,6 +1,7 @@
 'use strict';
 
-// NOTE: THIS FILE IS DEPRECIATED
+// NOTE: THIS FILE IS DEPRECIATED BUT CURRENTLY STILL USED.
+// Settings will be pulled out as configuration changes.
 
 var config = {};
 

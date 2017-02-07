@@ -30,47 +30,61 @@ let _respond = (response, message) => {
 
 let _validateEventBeforeProcess = (request, response) => {
 	return new Promise((resolve, reject) => {
-		if (!valid) {
-			return reject('XHub signature did not match expected.');
-		}
+		githubApi.auth.isXHubValid(request).then((valid) => {
+			if (!valid) {
+				return reject('XHub signature did not match expected.');
+			}
 
-		let eventName = request.get('X-GitHub-Event');
-		let payload = request.body.payload ? JSON.parse(request.body.payload) : request.body;
-		let cfg = config['webhooks/repository'];
+			let eventName = request.get('X-GitHub-Event');
+			let payload = request.body.payload ? JSON.parse(request.body.payload) : request.body;
+			let cfg = config['webhooks/repository'];
+			if (!cfg.events[eventName]) {
+				return reject(`POST event received, but the event '${eventName}' is not an event I process.`);
+			}
 
-		if (!cfg.events[eventName]) {
-			return reject(`POST event received, but the event '${eventName}' is not an event I process.`);
-		}
+			// make sure we have a body to parse
+			if (!payload) {
+				return reject(`POST event received, but it does not contain a body.`);
+			}
 
-		// make sure we have a body to parse
-		if (!payload) {
-			return reject(`POST event received, but it does not contain a body.`);
-		}
+			if (!cfg.enabled) {
+				return reject('POST event received but Repository hook not enabled: stopping.');
+			}
 
-		if (!cfg.enabled) {
-			return reject('POST event received but Repository hook not enabled: stopping.');
-		}
+			if (!payload.repository) {
+				return reject('POST event received, but repository was not included in the body.');
+			}
 
-		if (!payload.repository) {
-			return reject('POST event received, but repository was not included in the body.');
-		}
-
-		return resolve({
-			name: eventName,
-			payload: payload
+			return resolve({
+				name: eventName,
+				payload: payload
+			});
+		}, (err) => {
+			return reject(err);
 		});
 	});
 };
 
 let _processRepositoryEvent = (request, response, next) => {
 	_validateEventBeforeProcess(request, response).then((result) => {
-		enforcer.onRepositoryCreate(eventName, payload).then((r) => {
-			return _respond(response, `Successfully executed: bot.onRepositoryCreate: ${payload.repository.name}.`);
-		}, (err) => {
-			console.log(`Error executing bot.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
-			debug(`Error executing bot.onRepositoryCreate:${payload.repository.name}.`, err);
-			return _respond(response, `Error executing bot.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
-		})
+		try {
+			let payload = result.payload;
+			enforcer.onRepositoryCreate(result.name, payload).then(() => {
+				try {
+					console.log("after:enforcer.onRepositoryCreate");
+					return _respond(response, `Successfully executed: bot.onRepositoryCreate: ${payload.repository.name}.`);
+				} catch (x) {
+					return _respond(response, x.toString());
+				}
+			}, (err) => {
+				console.log(`Error executing bot.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
+				debug(`Error executing bot.onRepositoryCreate:${payload.repository.name}.`, err);
+				return _respond(response, `Error executing bot.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
+			});
+		} catch(e) {
+			console.error(e);
+			return _respond(response, e.toString());
+		}
 	}, (err) => {
 		console.error(err);
 		debug(err.message, err);
