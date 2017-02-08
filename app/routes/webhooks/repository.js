@@ -77,9 +77,9 @@ let _processRepositoryEvent = (request, response, next) => {
 					return _respond(response, x.toString());
 				}
 			}, (err) => {
-				console.log(`Error executing bot.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
-				debug(`Error executing bot.onRepositoryCreate:${payload.repository.name}.`, err);
-				return _respond(response, `Error executing bot.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
+				console.log(`Error executing enforcer.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
+				debug(`Error executing enforcer.onRepositoryCreate:${payload.repository.name}.`, err);
+				return _respond(response, `Error executing enforcer.onRepositoryCreate:${payload.repository.name}.\n Error: ${err.toString()}`);
 			});
 		} catch(e) {
 			console.error(e);

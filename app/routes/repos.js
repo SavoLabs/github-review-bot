@@ -4,16 +4,11 @@ const bot = require('../bot');
 const github = require('../github');
 const debug = require('debug')('reviewbot:repos');
 const router = express.Router();
-const loginRoute = '/login';
 const Promise = require('promise');
 const async = require('async');
 
-let requireLoggedIn = () => {
-	return require('connect-ensure-login').ensureLoggedIn(loginRoute);
-};
-
 /* GET home page. */
-router.get('/', requireLoggedIn(), (req, res) => {
+router.get('/', github.auth.ensureLoggedIn(), (req, res) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			console.log("not Authorized");
@@ -36,7 +31,7 @@ router.get('/', requireLoggedIn(), (req, res) => {
 	});
 });
 
-router.get('/:repo', requireLoggedIn(), (req, res) => {
+router.get('/:repo', github.auth.ensureLoggedIn(), (req, res) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			let err = new Error('Not Authorized.');
@@ -57,7 +52,7 @@ router.get('/:repo', requireLoggedIn(), (req, res) => {
 	});
 });
 
-router.post('/enforce/:repo', requireLoggedIn(), (req, res) => {
+router.post('/enforce/:repo', github.auth.ensureLoggedIn(), (req, res) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			let err = new Error('Not Authorized.');
@@ -76,7 +71,7 @@ router.post('/enforce/:repo', requireLoggedIn(), (req, res) => {
 	});
 });
 
-router.get('/unenforce/:repo', requireLoggedIn(), (req, res) => {
+router.get('/unenforce/:repo', github.auth.ensureLoggedIn(), (req, res) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			let err = new Error('Not Authorized.');
@@ -94,7 +89,7 @@ router.get('/unenforce/:repo', requireLoggedIn(), (req, res) => {
 	});
 });
 
-router.get('/setup', (req, res) => {
+router.get('/setup', github.auth.ensureLoggedIn(), (req, res) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			let err = new Error('Not Authorized.');

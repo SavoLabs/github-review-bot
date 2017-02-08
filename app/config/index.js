@@ -1,5 +1,6 @@
 'use strict';
 const debug = require('debug')('reviewbot:bot');
+// this should be removed at some point, once all configs are moved.
 const config = require('../../config');
 const Promise = require('promise');
 const async = require('async');

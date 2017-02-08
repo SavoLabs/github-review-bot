@@ -5,15 +5,10 @@ const github = require('../github');
 const debug = require('debug')('reviewbot:audit');
 const router = express.Router();
 const config = require('../../config');
-const loginRoute = '/login';
 const Promise = require('promise');
 
-let requireLoggedIn = () => {
-	return require('connect-ensure-login').ensureLoggedIn(loginRoute);
-};
-
 /* GET home page. */
-router.get('/', requireLoggedIn(), (req, res, next) => {
+router.get('/', github.auth.ensureLoggedIn(), (req, res, next) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			console.log("not Authorized");

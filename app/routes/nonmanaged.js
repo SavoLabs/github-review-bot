@@ -4,15 +4,10 @@ const bot = require('../bot');
 const github = require('../github');
 const debug = require('debug')('reviewbot:nonmanaged');
 const router = express.Router();
-const config = require('../config');
 const loginRoute = '/login';
 const Promise = require('promise');
 const _ = require('lodash');
 const async = require('async');
-
-let requireLoggedIn = () => {
-	return require('connect-ensure-login').ensureLoggedIn(loginRoute);
-};
 
 let _render = (req, res, data) => {
 	let dataObject = {
@@ -22,7 +17,7 @@ let _render = (req, res, data) => {
 	res.render('nonmanaged', dataObject);
 };
 
-router.get('/', requireLoggedIn(), (req, res, next) => {
+router.get('/', github.auth.ensureLoggedIn(), (req, res, next) => {
 	github.auth.isUserInOrganization(req.user).then((allowed) => {
 		if (!allowed) {
 			console.log("not Authorized");

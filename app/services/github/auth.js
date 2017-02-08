@@ -2,7 +2,7 @@
 const githubApi = require('./github-api');
 const github = githubApi.service;
 const debug = require('debug')('reviewbot:bot');
-const config = require('../../../config');
+const config = require('../../config');
 const Promise = require('promise');
 
 	/**
@@ -47,10 +47,16 @@ const Promise = require('promise');
 			console.log("xhub validated: " + req.isXHubValid());
 			resolve(req.isXHubValid());
 		});
+	};
+
+	let ensureLoggedIn = () => {
+		let loginRoute = config['login'].route;
+		return require('connect-ensure-login').ensureLoggedIn(loginRoute);
 	}
 
 	module.exports = {
 		authenticate: authenticate,
 		isUserInOrganization: isUserInOrganization,
-		isXHubValid: isXHubValid
+		isXHubValid: isXHubValid,
+		ensureLoggedIn: ensureLoggedIn
 	};
