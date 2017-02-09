@@ -157,7 +157,7 @@ let get = (repo, number) => {
 			}
 		})
 	});
-}
+};
 
 module.exports = {
 	getComments: getComments,
@@ -165,5 +165,6 @@ module.exports = {
 	getLabels: getLabels,
 	createLabel: createLabel,
 	createLabels: createLabels,
-	edit: edit
+	edit: edit,
+	get: get
 };
